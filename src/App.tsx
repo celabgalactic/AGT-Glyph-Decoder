@@ -897,7 +897,7 @@ export default function App() {
                           className={`font-glyphs inline-block w-10 h-12 text-center select-none bg-zinc-950/60 border border-zinc-900 rounded-md shadow-inner transition-colors hover:border-green-400 hover:text-green-400 cursor-pointer ${isSlotSpinning ? 'text-green-500/50' : 'text-green-400'}`}
                           style={{ textShadow: '0 0 10px rgba(34, 197, 94, 0.4)' }}
                         >
-                          {sym.toLowerCase()}
+                          {sym.toUpperCase()}
                         </motion.span>
                       );
                     })}
@@ -910,7 +910,7 @@ export default function App() {
                         {t.portalCode}
                       </span>
                       <span className="text-sm tracking-widest text-zinc-200 font-bold font-mono">
-                        {rollSymbols.join('')}
+                        {rollSymbols.join('').toUpperCase()}
                       </span>
                     </div>
 
@@ -954,7 +954,7 @@ export default function App() {
                       <span className="text-[#FFB451] uppercase tracking-wider text-xs font-extrabold font-mono">
                         GLYPH #{hoveredGlyph} : {lang === 'es' ? GLYPH_METADATA_LIST[hoveredGlyph].nameEs : GLYPH_METADATA_LIST[hoveredGlyph].nameEn}
                       </span>
-                      <span className="font-glyphs text-lg text-[#FFB451]">{hoveredGlyph.toLowerCase()}</span>
+                      <span className="font-glyphs text-lg text-[#FFB451]">{hoveredGlyph.toUpperCase()}</span>
                     </div>
                     <p className="text-[#FFB451] text-[15px] leading-relaxed font-sans">
                       {GLYPH_METADATA_LIST[hoveredGlyph].desc}
