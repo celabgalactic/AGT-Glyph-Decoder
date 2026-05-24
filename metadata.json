@@ -1,0 +1,6 @@
+{
+  "name": "NMS Glyph Randomizer",
+  "description": "Generate and randomize No Man's Sky coordinates and planetary portal glyphs to discover new destinations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
