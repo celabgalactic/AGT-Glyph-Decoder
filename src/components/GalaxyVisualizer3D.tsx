@@ -124,8 +124,9 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const width = canvas.width;
-      const height = canvas.height;
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
       
       // Clear viewport with a neat deep space dark background
       ctx.fillStyle = '#050505';

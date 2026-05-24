@@ -1028,7 +1028,7 @@ export default function App() {
               id="nmslogo" 
               src="https://wiki.nmscd.com/assets/images/webp/shared/nmscdbannerwhite.webp" 
               alt="Logo NMS" 
-              className="h-8 md:h-10 w-auto object-contain"
+              className="h-12 md:h-[60px] w-auto object-contain"
             />
           </a>
         </div>
@@ -1036,7 +1036,7 @@ export default function App() {
       </main>
 
       <footer 
-        className="w-full bg-[#FFB451] mt-16 py-8 px-4 text-center text-xs tracking-wider relative z-10 text-black border-t border-[#FF0500]/20"
+        className="w-full bg-[#FFB451] mt-16 py-8 px-4 text-center text-[13px] tracking-wider relative z-10 text-black border-t border-[#FF0500]/20"
         style={{ fontFamily: '"geonms-font", sans-serif' }}
       >
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center items-center gap-x-3 gap-y-2 select-none h-auto">
