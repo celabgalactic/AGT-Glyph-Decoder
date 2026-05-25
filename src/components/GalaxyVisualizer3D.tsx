@@ -9,10 +9,13 @@ import {
   Compass, 
   Maximize2 
 } from 'lucide-react';
+import { translations } from '../translations';
+import { SupportedLanguage } from '../types';
 
 interface GalaxyVisualizer3DProps {
   coordinates: { x: number; y: number; z: number } | null;
   galaxyName?: string;
+  lang?: SupportedLanguage;
 }
 
 interface Star {
@@ -24,8 +27,10 @@ interface Star {
   size: number;
 }
 
-export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordinates, galaxyName }) => {
+export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordinates, galaxyName, lang = 'en' }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  
+  const t = translations[lang] || translations.en;
   
   // Interactive navigation states
   const [yaw, setYaw] = useState<number>(1.2); // vertical/horizontal angle
@@ -330,7 +335,7 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
         ctx.fillStyle = '#FFB451';
         ctx.font = 'bold 11px "geonms-font", "JetBrains Mono", monospace';
         ctx.textAlign = 'left';
-        ctx.fillText('SIGNAL TARGET', projTarget.x + cs + 5, projTarget.y - 4);
+        ctx.fillText(t.signalTarget, projTarget.x + cs + 5, projTarget.y - 4);
       }
 
       // Compass UI Compass rosette visual indicator in bottom left corner
@@ -356,7 +361,7 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
       ctx.fillStyle = '#FFB451';
       ctx.font = '8px "geonms-font", "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('CORE', compX, compY - 22);
+      ctx.fillText(t.coreLabel, compX, compY - 22);
 
       animationFrameId = requestAnimationFrame(render);
     };
@@ -459,7 +464,7 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
             className="text-xs font-bold tracking-widest text-[#FFB451] uppercase"
             style={{ fontFamily: '"geonms-font", "Space Grotesk", sans-serif' }}
           >
-            AGT Mini Navi Region Locator
+            {t.miniNaviRegionLocatorTitle}
           </span>
         </div>
         
@@ -467,7 +472,7 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
         <div className="flex items-center gap-1.5 self-center">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
           <span className="text-[9px] font-mono text-[#FFB451]/60 uppercase tracking-widest font-semibold select-none">
-            ACTIVE TARGET LOCK
+            {t.activeTargetLock}
           </span>
         </div>
       </div>
@@ -536,14 +541,14 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
 
         {/* Map Help instructions floating badge */}
         <div className="absolute left-3 top-3 bg-zinc-950/80 border border-zinc-900 rounded px-2.5 py-1.5 pointer-events-none select-none text-[11px] font-mono text-zinc-400">
-          DRAG TO ROTATE // WHEEL OR SCROLL TO ZOOM
+          {t.dragToRotateLabel}
         </div>
       </div>
 
       {/* Target status details bar */}
       <div className="bg-zinc-900/40 border border-zinc-950 rounded-lg p-3 text-[12px] font-mono text-[#FFB451]/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="text-zinc-500 uppercase text-[10px] tracking-wider block">SIGNAL LOCK LOCATION</span>
+          <span className="text-zinc-500 uppercase text-[10px] tracking-wider block">{t.signalLockLocation}</span>
           <p className="font-extrabold text-[#E25530] mt-0.5 text-[13px]">
             {coordinates 
               ? `X: ${coordinates.x.toString(16).toUpperCase().padStart(4, '0')} | Y: ${coordinates.y.toString(16).toUpperCase().padStart(4, '0')} | Z: ${coordinates.z.toString(16).toUpperCase().padStart(4, '0')}`
@@ -552,12 +557,13 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
           </p>
         </div>
         <div className="text-right sm:text-right hidden sm:block">
-          <span className="text-zinc-500 uppercase text-[10px] tracking-wider block">SECTOR REGISTRY</span>
+          <span className="text-zinc-500 uppercase text-[10px] tracking-wider block">{t.sectorRegister.toUpperCase()}</span>
           <p className="text-zinc-400 mt-0.5 font-bold text-[13px]">
             {(() => {
               const name = galaxyName || 'Euclid';
-              return name.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-            })()} Galaxy
+              const formattedName = name.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+              return lang === 'de' || lang === 'fr' ? `${t.galaxyLabel} ${formattedName}` : `${formattedName} ${t.galaxyLabel}`;
+            })()}
           </p>
         </div>
       </div>

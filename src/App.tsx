@@ -31,7 +31,7 @@ import {
   SyncProgress, 
   RegionInfo 
 } from './types';
-import { translations, languageNames } from './translations';
+import { translations, languageNames, glyphTranslations } from './translations';
 import { 
   VALID_PORTAL_KEYS, 
   GLYPH_METADATA_LIST, 
@@ -50,6 +50,11 @@ const FANDOM_API_PATH = 'https://nomanssky.fandom.com/api.php';
 export default function App() {
   // Translate / language settings
   const [lang, setLang] = useState<SupportedLanguage>(() => {
+    const cookie = document.cookie.split('; ').find(row => row.startsWith('agt_lang='));
+    if (cookie) {
+      const val = cookie.split('=')[1] as SupportedLanguage;
+      if (val && translations[val]) return val;
+    }
     const cached = localStorage.getItem(LANGUAGE_CACHE_KEY) as SupportedLanguage;
     if (cached && translations[cached]) return cached;
     const nav = navigator.language.split('-')[0] as SupportedLanguage;
@@ -61,11 +66,70 @@ export default function App() {
 
   // Settings menu visual state
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [settingsRotation, setSettingsRotation] = useState<number>(0);
+
+  // Desktop text scaling state
+  const [desktopTextScale, setDesktopTextScale] = useState<string>(() => {
+    const cookie = document.cookie.split('; ').find(row => row.startsWith('agt_desktop_text_scale='));
+    if (cookie) {
+      const val = cookie.split('=')[1];
+      if (val) return val;
+    }
+    return localStorage.getItem('desktop_text_scale') || '1x';
+  });
+
+  const handleTextScaleChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setDesktopTextScale(value);
+    localStorage.setItem('desktop_text_scale', value);
+    
+    // Set cookie (active for 365 days / 1 year)
+    const expires = new Date();
+    expires.setFullYear(expires.getFullYear() + 1);
+    document.cookie = `agt_desktop_text_scale=${value}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+  };
+
+  // Render a dynamic stylesheet for desktop scaling
+  const scaleStyleStyle = useMemo(() => {
+    if (desktopTextScale === '1x') return null;
+    const factor = desktopTextScale === '1.5x' ? 1.5 :
+                   desktopTextScale === '2x' ? 2 :
+                   desktopTextScale === '2.5x' ? 2.5 :
+                   desktopTextScale === '3x' ? 3 : 1;
+    return (
+      <style>{`
+        @media (min-width: 768px) {
+          #scaled-content-wrapper {
+            font-size: ${factor}rem;
+          }
+          #scaled-content-wrapper .text-xs { font-size: ${0.75 * factor}rem; line-height: ${1 * factor}rem; }
+          #scaled-content-wrapper .text-sm { font-size: ${0.875 * factor}rem; line-height: ${1.25 * factor}rem; }
+          #scaled-content-wrapper .text-md { font-size: ${1 * factor}rem; line-height: ${1.5 * factor}rem; }
+          #scaled-content-wrapper .text-base { font-size: ${1 * factor}rem; line-height: ${1.5 * factor}rem; }
+          #scaled-content-wrapper .text-lg { font-size: ${1.125 * factor}rem; line-height: ${1.75 * factor}rem; }
+          #scaled-content-wrapper .text-xl { font-size: ${1.25 * factor}rem; line-height: ${1.75 * factor}rem; }
+          #scaled-content-wrapper .text-2xl { font-size: ${1.5 * factor}rem; line-height: ${2 * factor}rem; }
+          #scaled-content-wrapper .text-3xl { font-size: ${1.875 * factor}rem; line-height: ${2.25 * factor}rem; }
+          #scaled-content-wrapper .text-4xl { font-size: ${2.25 * factor}rem; line-height: ${2.5 * factor}rem; }
+          #scaled-content-wrapper .text-5xl { font-size: ${3 * factor}rem; line-height: 1; }
+          #scaled-content-wrapper div.font-glyphs { 
+            gap: ${0.375 * factor}rem !important;
+          }
+          #scaled-content-wrapper span.font-glyphs.inline-block { 
+            width: ${2.5 * factor}rem !important; 
+            height: ${3 * factor}rem !important; 
+            line-height: ${3 * factor}rem !important;
+            font-size: ${3 * factor}rem !important; 
+          }
+        }
+      `}</style>
+    );
+  }, [desktopTextScale]);
 
   // Audio setup and toggle
   const [muted, setMuted] = useState<boolean>(() => {
     const cookie = document.cookie.split('; ').find(row => row.startsWith('agt_muted='));
-    return cookie ? cookie.split('=')[1] === 'true' : false;
+    return cookie ? cookie.split('=')[1] === 'true' : true;
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -575,11 +639,16 @@ export default function App() {
     };
   }, []);
 
-  // Update localStorage language
+  // Update localStorage and cookie language
   const handleLanguageChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const selected = e.target.value as SupportedLanguage;
     setLang(selected);
     localStorage.setItem(LANGUAGE_CACHE_KEY, selected);
+
+    // Save as cookie (active for 365 days / 1 year)
+    const expires = new Date();
+    expires.setFullYear(expires.getFullYear() + 1);
+    document.cookie = `agt_lang=${selected}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
   };
 
   // Coordinate breakdown calculation visual guide
@@ -627,46 +696,50 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-sans bg-[#050505] selection:bg-green-500/30 selection:text-green-400">
-      
-      {/* Dynamic scrolling space ambient decoration */}
-      <div className="absolute inset-x-0 top-0 h-[500px] pointer-events-none bg-radial-gradient from-green-950/20 to-transparent z-0 opacity-40" />
+      {scaleStyleStyle}
+      <div id="scaled-content-wrapper">
+        {/* Dynamic scrolling space ambient decoration */}
+        <div className="absolute inset-x-0 top-0 h-[500px] pointer-events-none bg-radial-gradient from-green-950/20 to-transparent z-0 opacity-40" />
 
-      {/* Main Header Container bar */}
-      <header className="relative z-20 border-b border-[#FF0500]/50 bg-zinc-950/90 backdrop-blur-md px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          
-          <div className="flex items-center gap-3">
-            <img 
-              id="agtLogo" 
-              src="/AGTIcon.png" 
-              alt="AGT Logo" 
-              className="h-12 w-12 object-contain"
-            />
-            <div className="flex flex-col">
-              <span className="text-sm md:text-base font-extrabold tracking-wider text-[#FFB451] uppercase">
-                Alliance of Galactic Travellers
-              </span>
-              <span className="text-xs text-[#FFB451] opacity-90 font-semibold uppercase tracking-wider font-mono">
-                AGT Glyph Generator
-              </span>
+        {/* Main Header Container bar */}
+        <header className="relative z-20 border-b border-[#FF0500]/50 bg-zinc-950/90 backdrop-blur-md px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            
+            <div className="flex items-center gap-3">
+              <img 
+                id="agtLogo" 
+                src="/AGTIcon.png" 
+                alt="AGT Logo" 
+                className="h-12 w-12 object-contain"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm md:text-base font-extrabold tracking-wider text-[#FFB451] uppercase">
+                  Alliance of Galactic Travellers
+                </span>
+                <span className="text-xs text-[#FFB451] opacity-90 font-semibold uppercase tracking-wider font-mono">
+                  AGT {t.glyphGenerator}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              
+              {/* Settings icon in the top right - icon only and spins on hover */}
+              <motion.div
+                id="settingsButton"
+                onClick={() => setShowSettings(true)}
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+                className="text-[#FFB451] hover:text-[#E25530] transition-colors cursor-pointer p-2 flex items-center justify-center"
+                title="Settings"
+                aria-label="Settings"
+              >
+                <Settings className="w-7 h-7" />
+              </motion.div>
+
             </div>
           </div>
-
-          <div className="flex items-center gap-4">
-            
-            {/* Settings button in the top right */}
-            <button 
-              id="settingsButton"
-              onClick={() => setShowSettings(true)}
-              className="px-4 py-2 border border-[#FF0500] bg-[#E25530] text-black font-extrabold font-mono rounded-lg flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-md text-xs uppercase cursor-pointer"
-            >
-              <Settings className="w-4 h-4 text-black" />
-              <span>Settings</span>
-            </button>
-
-          </div>
-        </div>
-      </header>
+        </header>
 
       {/* Main Container body */}
       <main className="relative z-10 max-w-5xl mx-auto px-4 mt-8 pb-12">
@@ -678,7 +751,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0 }}
             className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#FFB451] mb-2 uppercase"
           >
-            AGT NMS Glyph Generator
+            AGT NMS {t.glyphGenerator}
           </motion.h1>
         </div>
 
@@ -780,41 +853,41 @@ export default function App() {
                     className="w-full bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-sm tracking-wider py-4 px-6 rounded-lg shadow-lg hover:bg-[#E25530]/90 active:scale-[0.99] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <RotateCw className={`w-4 h-4 text-black ${isRolling ? 'animate-spin' : ''}`} />
-                    <span>General random region glyphs</span>
+                    <span>{t.generalRandomRegionGlyphsBtn}</span>
                   </button>
                 </div>
 
               </div>
 
               {/* Seed manual variables card inputs */}
-              <div className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl text-[#FFB451] flex flex-col justify-between">
+              <div className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl text-[#FFB451] flex flex-col justify-between" style={{ fontFamily: '"geonms-font", sans-serif' }}>
                 <div>
                   <div className="flex items-center gap-2 mb-6 border-b border-[#FF0500] pb-3 text-[#FFB451]">
                     <Layers className="w-5 h-5 text-[#FFB451]" />
-                    <h2 className="text-sm font-bold uppercase tracking-widest font-mono text-[#FFB451]">
-                      Manual Seeds
+                    <h2 className="text-sm font-bold uppercase tracking-widest text-[#FFB451]">
+                      {t.exactLocationTitle}
                     </h2>
                   </div>
 
                   <div className="space-y-4">
                     {/* Coordinates manual text entry */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-mono block text-[#FFB451]">
-                        GALACTIC SECTOR COORDINATES (XXXX:YYYY:ZZZZ:SSSS)
+                      <label className="text-xs block text-[#FFB451] uppercase tracking-wider">
+                        {t.galacticCoordinatesLabel}
                       </label>
                       <input 
                         type="text"
                         value={manualCoordinates}
                         onChange={handleCoordsManualInput}
                         placeholder="e.g. 0C4F:007F:0D54:007A"
-                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm font-mono tracking-wider focus:border-[#FF0500] focus:outline-none focus:ring-1 focus:ring-[#FF0500]/25 uppercase text-left text-[#FFB451] placeholder-[#FFB451]/35"
+                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm tracking-wider focus:border-[#FF0500] focus:outline-none focus:ring-1 focus:ring-[#FF0500]/25 uppercase text-left text-[#FFB451] placeholder-[#FFB451]/35"
                       />
                     </div>
 
                     {/* Glyph 12-char fallback string */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-mono block text-[#FFB451]">
-                        {t.glyphinput} (HEX SEED 12-CHARS)
+                      <label className="text-xs block text-[#FFB451] uppercase tracking-wider">
+                        {t.glyphs12CharsLabel}
                       </label>
                       <input 
                         type="text"
@@ -822,11 +895,12 @@ export default function App() {
                         value={glyphInput}
                         onChange={handleGlyphTextInput}
                         placeholder="0123456789AB"
-                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-center text-md font-mono tracking-widest focus:border-[#FF0500] focus:outline-none focus:ring-1 focus:ring-[#FF0500]/25 uppercase text-[#FFB451] placeholder-[#FFB451]/35"
+                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-center text-xl tracking-widest focus:border-[#FF0500] focus:outline-none focus:ring-1 focus:ring-[#FF0500]/25 uppercase text-[#FFB451] placeholder-[#FFB451]/35 font-glyphs"
+                        style={{ fontFamily: '"NMS-Glyphs-Mono", monospace' }}
                       />
-                      <div className="flex justify-between text-[10px] font-mono text-[#FFB451]/75">
-                        <span>LENGTH: {glyphInput.length} / 12</span>
-                        <span>VALID KEYS: 0-9, A-F</span>
+                      <div className="flex justify-between text-[10px] text-[#FFB451]/75">
+                        <span>{t.lengthLabel}: {glyphInput.length} / 12</span>
+                        <span>{t.validKeysLabel}</span>
                       </div>
                     </div>
                   </div>
@@ -841,7 +915,7 @@ export default function App() {
                     className="w-full bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-sm tracking-wider py-4 px-6 rounded-lg shadow-lg hover:bg-[#E25530]/90 active:scale-[0.99] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <RotateCw className={`w-4 h-4 text-black ${isRolling ? 'animate-spin' : ''}`} />
-                    <span>Generate exact manual glyphs</span>
+                    <span>{t.generateGlyphsBtn}</span>
                   </button>
                 </div>
               </div>
@@ -859,7 +933,7 @@ export default function App() {
               >
                 
                 <h3 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest mb-4">
-                  PORTAL SIGNAL SPECTRUM
+                  {t.portalSignalSpectrumTitle}
                 </h3>
 
                 {/* Simulated Portal glyph ring board */}
@@ -941,9 +1015,9 @@ export default function App() {
               {/* Glyph Explanation Box - Fully standalone full-screen width display card */}
               <div className="w-full bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl text-[#FFB451]" style={{ fontFamily: '"geonms-font", sans-serif' }}>
                 <h3 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest mb-4 border-b border-zinc-900 pb-2.5">
-                  Glyph Translation & Mythos
+                  {t.glyphTranslationMythosTitle}
                 </h3>
-                {hoveredGlyph && GLYPH_METADATA_LIST[hoveredGlyph] ? (
+                {hoveredGlyph && glyphTranslations[lang] && glyphTranslations[lang][hoveredGlyph] ? (
                   <motion.div 
                     key={hoveredGlyph}
                     initial={{ opacity: 0, y: 5 }}
@@ -952,24 +1026,24 @@ export default function App() {
                   >
                     <div className="flex items-center justify-between font-bold mb-2 border-b border-zinc-800 pb-2">
                       <span className="text-[#FFB451] uppercase tracking-wider text-xs font-extrabold font-mono">
-                        GLYPH #{hoveredGlyph} : {lang === 'es' ? GLYPH_METADATA_LIST[hoveredGlyph].nameEs : GLYPH_METADATA_LIST[hoveredGlyph].nameEn}
+                        GLYPH #{hoveredGlyph} : {glyphTranslations[lang][hoveredGlyph].name}
                       </span>
                       <span className="font-glyphs text-lg text-[#FFB451]">{hoveredGlyph.toUpperCase()}</span>
                     </div>
                     <p className="text-[#FFB451] text-[15px] leading-relaxed font-sans">
-                      {GLYPH_METADATA_LIST[hoveredGlyph].desc}
+                      {glyphTranslations[lang][hoveredGlyph].desc}
                     </p>
                   </motion.div>
                 ) : (
                   <div className="text-[#FFB451] text-[15px] text-center p-6 bg-zinc-900/10 rounded-lg border border border-zinc-900/50 font-mono leading-relaxed">
-                    // Hover or touch any glyph in the spectrum above to translate system mythos details.
+                    {t.glyphHoverInstructions}
                   </div>
                 )}
               </div>
 
               {/* AGT MINI MAP REGION LOCATOR box (Mini map locator box) */}
               {mathGuide && (
-                <GalaxyVisualizer3D coordinates={mathGuide} galaxyName={selectedGalaxy} />
+                <GalaxyVisualizer3D coordinates={mathGuide} galaxyName={selectedGalaxy} lang={lang} />
               )}
 
               {/* Portal decoupling calculations box */}
@@ -978,24 +1052,24 @@ export default function App() {
                   <div className="flex items-center gap-2 mb-2 text-[#FFB451]">
                     <Info className="w-4 h-4 text-[#FFB451]" />
                     <span className="text-xs font-bold tracking-widest font-mono uppercase">
-                      Portal Decoupling Calculations
+                      {t.portalDecouplingCalculationsTitle}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono mt-3">
                     <div className="bg-zinc-900/50 p-2 rounded border border-[#FF0500] text-[#E25530]">
-                      <span className="text-[#E25530]/80 block text-[9px] uppercase tracking-wider">X GRID OFFSET</span>
+                      <span className="text-[#E25530]/80 block text-[9px] uppercase tracking-wider">{t.xGridOffset}</span>
                       <span className="text-[#E25530] block font-bold mt-1 text-xs font-mono">
                         {mathGuide.x.toString(16).toUpperCase()} ({mathGuide.x})
                       </span>
                     </div>
-                    <div className="bg-zinc-900/50 p-2 rounded border border-[#FF0500] text-[#E25530]">
-                      <span className="text-[#E25530]/80 block text-[9px] uppercase tracking-wider">Y OFFSET</span>
+                    <div className="bg-[#E25530]/10 p-2 rounded border border-[#FF0500] text-[#E25530]">
+                      <span className="text-[#E25530]/80 block text-[9px] uppercase tracking-wider">{t.yOffset}</span>
                       <span className="text-[#E25530] block font-bold mt-1 text-xs font-mono">
                         {mathGuide.y.toString(16).toUpperCase()} ({mathGuide.y})
                       </span>
                     </div>
                     <div className="bg-zinc-900/50 p-2 rounded border border-[#FF0500] text-[#E25530]">
-                      <span className="text-[#E25530]/80 block text-[9px] uppercase tracking-wider">Z GRID OFFSET</span>
+                      <span className="text-[#E25530]/80 block text-[9px] uppercase tracking-wider">{t.zGridOffset}</span>
                       <span className="text-[#E25530] block font-bold mt-1 text-xs font-mono">
                         {mathGuide.z.toString(16).toUpperCase()} ({mathGuide.z})
                       </span>
@@ -1061,6 +1135,8 @@ export default function App() {
           <a href="https://www.nms-agt.com/terms/copyright" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Copyright</a>
         </div>
       </footer>
+
+      </div>
 
       {/* Settings Modal overlay with exact FFB451 text color, FF0500 borders and outcomes, E25530 button backgrounds, and black text inside buttons */}
       <AnimatePresence>
@@ -1130,6 +1206,27 @@ export default function App() {
                     </>
                   )}
                 </button>
+              </div>
+
+              {/* Desktop Text Scale settings */}
+              <div className="space-y-2">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
+                  Desktop Text Scale
+                </label>
+                <div className="relative">
+                  <select 
+                    id="settings-scale-select"
+                    value={desktopTextScale} 
+                    onChange={handleTextScaleChange}
+                    className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
+                  >
+                    <option value="1x" className="bg-zinc-950 text-[#FFB451]">1x (Default)</option>
+                    <option value="1.5x" className="bg-zinc-950 text-[#FFB451]">1.5x</option>
+                    <option value="2x" className="bg-zinc-950 text-[#FFB451]">2x</option>
+                    <option value="2.5x" className="bg-zinc-950 text-[#FFB451]">2.5x</option>
+                    <option value="3x" className="bg-zinc-950 text-[#FFB451]">3x</option>
+                  </select>
+                </div>
               </div>
 
               {/* Moved Sync Updates block */}
