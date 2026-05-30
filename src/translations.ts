@@ -45,6 +45,7 @@ export interface TranslationSet {
 
   // New keys requested for translation
   exactLocationTitle: string;
+  clearFields: string;
   galacticCoordinatesLabel: string;
   glyphs12CharsLabel: string;
   lengthLabel: string;
@@ -109,6 +110,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     syncStatusRunning: "Updating database from Fandom NMS Wiki...",
 
     exactLocationTitle: "Exact Location",
+    clearFields: "Clear Fields",
     galacticCoordinatesLabel: "GALACTIC COORDINATES (XXXX:YYYY:ZZZZ:SSSS)",
     glyphs12CharsLabel: "Glyphs (12 Characters)",
     lengthLabel: "LENGTH",
@@ -171,6 +173,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     syncStatusRunning: "Actualizando base de datos desde la Wiki NMS...",
 
     exactLocationTitle: "Ubicación Exacta",
+    clearFields: "Limpiar Campos",
     galacticCoordinatesLabel: "COORDENADAS GALÁCTICAS (XXXX:YYYY:ZZZZ:SSSS)",
     glyphs12CharsLabel: "Glifos (12 Caracteres)",
     lengthLabel: "LONGITUD",
@@ -233,6 +236,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     syncStatusRunning: "Mise à jour de la base de données à partir de FND Wiki...",
 
     exactLocationTitle: "Emplacement Exact",
+    clearFields: "Effacer les champs",
     galacticCoordinatesLabel: "COORDONNÉES GALACTIQUES (XXXX:YYYY:ZZZZ:SSSS)",
     glyphs12CharsLabel: "Glyphes (12 Caractères)",
     lengthLabel: "LONGUEUR",
@@ -295,6 +299,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     syncStatusRunning: "Aktualisiere Datenbank vom No Man's Sky Wiki...",
 
     exactLocationTitle: "Exakter Standort",
+    clearFields: "Felder löschen",
     galacticCoordinatesLabel: "GALAKTISCHE KOORDINATEN (XXXX:YYYY:ZZZZ:SSSS)",
     glyphs12CharsLabel: "Glyphen (12 Zeichen)",
     lengthLabel: "LÄNGE",
@@ -357,6 +362,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     syncStatusRunning: "Atualizando banco de dados através da NMS Wiki da Fandom...",
 
     exactLocationTitle: "Localização Exata",
+    clearFields: "Limpar Campos",
     galacticCoordinatesLabel: "COORDENADAS GALÁCTICAS (XXXX:YYYY:ZZZZ:SSSS)",
     glyphs12CharsLabel: "Glifos (12 Caracteres)",
     lengthLabel: "COMPRIMENTO",

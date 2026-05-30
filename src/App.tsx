@@ -23,7 +23,8 @@ import {
   Settings,
   Volume2,
   VolumeX,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 import { 
   DatabaseState, 
@@ -361,14 +362,9 @@ export default function App() {
   // Handle click on quick selector glyph buttons to insert into the 12-character glyph field
   const handleGlyphButtonClick = (char: string) => {
     if (isRolling) return;
+    if (glyphInput.length >= 12) return;
     
-    let nextVal = '';
-    if (glyphInput.length < 12) {
-      nextVal = glyphInput + char.toUpperCase();
-    } else {
-      nextVal = char.toUpperCase();
-    }
-    
+    const nextVal = glyphInput + char.toUpperCase();
     const validated = validateGlyphInput(nextVal);
     setGlyphInput(validated);
     if (validated.length === 12) {
@@ -986,11 +982,27 @@ export default function App() {
               {/* Seed manual variables card inputs */}
               <div className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl text-[#FFB451] flex flex-col justify-between" style={{ fontFamily: '"geonms-font", sans-serif' }}>
                 <div>
-                  <div className="flex items-center gap-2 mb-6 border-b border-[#FF0500] pb-3 text-[#FFB451]">
-                    <Layers className="w-5 h-5 text-[#FFB451]" />
-                    <h2 className="text-sm font-bold uppercase tracking-widest text-[#FFB451]">
-                      {t.exactLocationTitle}
-                    </h2>
+                  <div className="flex items-center justify-between mb-6 border-b border-[#FF0500] pb-3 text-[#FFB451]">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-[#FFB451]" />
+                      <h2 className="text-sm font-bold uppercase tracking-widest text-[#FFB451]">
+                        {t.exactLocationTitle}
+                      </h2>
+                    </div>
+                    {(manualCoordinates || glyphInput) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setManualCoordinates('');
+                          setGlyphInput('');
+                        }}
+                        className="text-xs bg-[#E25530]/10 hover:bg-[#E25530]/20 border border-[#FF0500]/40 hover:border-[#FFB451] px-2.5 py-1 rounded text-[#FFB451] transition-all flex items-center gap-1 cursor-pointer active:scale-95 text-[10px] font-mono tracking-wider font-semibold"
+                        title={t.clearFields}
+                      >
+                        <Trash2 className="w-3 h-3 text-[#FFB451]" />
+                        <span>{t.clearFields.toUpperCase()}</span>
+                      </button>
+                    )}
                   </div>
 
                   <div className="space-y-4">
