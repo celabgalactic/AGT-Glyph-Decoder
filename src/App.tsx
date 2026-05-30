@@ -199,6 +199,21 @@ export default function App() {
   const [manualCoordinates, setManualCoordinates] = useState<string>('');
   const [glyphInput, setGlyphInput] = useState<string>('');
 
+  // Autocomplete state variables
+  const [galaxySearchInput, setGalaxySearchInput] = useState<string>('');
+  const [civSearchInput, setCivSearchInput] = useState<string>('');
+  const [showGalaxySuggestions, setShowGalaxySuggestions] = useState<boolean>(false);
+  const [showCivSuggestions, setShowCivSuggestions] = useState<boolean>(false);
+
+  // Keep autocomplete inputs synchronized with external selections (like random region picks or preset changes)
+  useEffect(() => {
+    setGalaxySearchInput(selectedGalaxy || '');
+  }, [selectedGalaxy]);
+
+  useEffect(() => {
+    setCivSearchInput(selectedCivilization || '');
+  }, [selectedCivilization]);
+
   // Randomized code display values
   const [generatedCode, setGeneratedCode] = useState<string>('000000000000');
   const [isRolling, setIsRolling] = useState<boolean>(false);
@@ -334,6 +349,27 @@ export default function App() {
   // Handle manual 12-digit portal code typed in
   const handleGlyphTextInput = (e: ChangeEvent<HTMLInputElement>) => {
     const validated = validateGlyphInput(e.target.value);
+    setGlyphInput(validated);
+    if (validated.length === 12) {
+      const reversedCoords = glyphs2Coords(validated);
+      if (reversedCoords) {
+        setManualCoordinates(reversedCoords);
+      }
+    }
+  };
+
+  // Handle click on quick selector glyph buttons to insert into the 12-character glyph field
+  const handleGlyphButtonClick = (char: string) => {
+    if (isRolling) return;
+    
+    let nextVal = '';
+    if (glyphInput.length < 12) {
+      nextVal = glyphInput + char.toUpperCase();
+    } else {
+      nextVal = char.toUpperCase();
+    }
+    
+    const validated = validateGlyphInput(nextVal);
     setGlyphInput(validated);
     if (validated.length === 12) {
       const reversedCoords = glyphs2Coords(validated);
@@ -694,6 +730,18 @@ export default function App() {
   }, [currentCivsListRaw, selectedGalaxy]);
   const currentRegionsList = selectedGalaxy && selectedCivilization && database?.data[selectedGalaxy]?.regions[selectedCivilization] || [];
 
+  const filteredGalaxies = useMemo(() => {
+    const term = galaxySearchInput.toLowerCase().trim();
+    if (!term) return currentGalaxiesList;
+    return currentGalaxiesList.filter(g => g.toLowerCase().includes(term));
+  }, [galaxySearchInput, currentGalaxiesList]);
+
+  const filteredCivs = useMemo(() => {
+    const term = civSearchInput.toLowerCase().trim();
+    if (!term) return currentCivsList;
+    return currentCivsList.filter(c => c.toLowerCase().includes(term));
+  }, [civSearchInput, currentCivsList]);
+
   return (
     <div className="min-h-screen font-sans bg-[#050505] selection:bg-green-500/30 selection:text-green-400">
       {scaleStyleStyle}
@@ -773,45 +821,121 @@ export default function App() {
 
                   <div className="space-y-4 text-[#FFB451]">
                     
-                    {/* Galaxy Select dropdown */}
+                    {/* Galaxy Autocomplete Select field */}
                     <div className="space-y-1.5" id="galaxy-field">
                       <label className="text-xs font-semibold uppercase tracking-wider block text-[#FFB451]">
                         {t.galaxy}
                       </label>
-                      <div className="relative">
-                        <select 
+                      <div className="relative" id="galaxyAutocompleteContainer">
+                        <input
                           id="galaxySelect"
-                          value={selectedGalaxy}
-                          onChange={(e) => onGalaxyChange(e.target.value)}
-                          className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all cursor-pointer"
-                        >
-                          <option value="">-- {t.selectGalaxy} --</option>
-                          {currentGalaxiesList.map(g => (
-                            <option key={g} value={g}>{g}</option>
-                          ))}
-                        </select>
+                          type="text"
+                          placeholder={`-- ${t.selectGalaxy} --`}
+                          value={galaxySearchInput}
+                          onChange={(e) => {
+                            setGalaxySearchInput(e.target.value);
+                            setShowGalaxySuggestions(true);
+                          }}
+                          onFocus={() => setShowGalaxySuggestions(true)}
+                          onBlur={() => setTimeout(() => setShowGalaxySuggestions(false), 250)}
+                          className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 pr-10 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all placeholder-[#FFB451]/30 font-semibold"
+                        />
+                        {galaxySearchInput && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onGalaxyChange('');
+                              setGalaxySearchInput('');
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FFB451]/50 hover:text-[#FFB451] cursor-pointer hover:scale-110 active:scale-95 transition-all p-1"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {showGalaxySuggestions && (
+                          <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-zinc-950 border border-[#FF0500] rounded-lg shadow-2xl">
+                            {filteredGalaxies.length > 0 ? (
+                              filteredGalaxies.map(g => (
+                                <div
+                                  key={g}
+                                  onMouseDown={() => {
+                                    onGalaxyChange(g);
+                                    setShowGalaxySuggestions(false);
+                                  }}
+                                  className={`p-2.5 text-sm text-[#FFB451] hover:bg-[#E25530] hover:text-black font-semibold cursor-pointer transition-colors ${
+                                    selectedGalaxy === g ? 'bg-zinc-900 text-[#FFB451] border-l-2 border-[#FF0500]' : ''
+                                  }`}
+                                >
+                                  {g}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-2.5 text-xs text-zinc-500 font-mono italic">
+                                {t.noRegionsFound}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Civilization Select dropdown */}
+                    {/* Civilization Autocomplete Select field */}
                     <div className="space-y-1.5" id="civ-field">
                       <label className="text-xs font-semibold uppercase tracking-wider block text-[#FFB451]">
                         {t.civilization}
                       </label>
-                      <select 
-                        id="civilizationSelect"
-                        value={selectedCivilization}
-                        onChange={(e) => onCivChange(e.target.value)}
-                        disabled={!selectedGalaxy}
-                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        <option value="" className="bg-zinc-950 text-[#FFB451]">
-                          {!selectedGalaxy ? `-- ${t.selectGalaxyFirst} --` : `-- ${t.selectCivilization} --`}
-                        </option>
-                        {currentCivsList.map(c => (
-                          <option key={c} value={c} className="bg-zinc-950 text-[#FFB451]">{c}</option>
-                        ))}
-                      </select>
+                      <div className="relative" id="civAutocompleteContainer">
+                        <input
+                          id="civilizationSelect"
+                          type="text"
+                          placeholder={!selectedGalaxy ? `-- ${t.selectGalaxyFirst} --` : `-- ${t.selectCivilization} --`}
+                          value={civSearchInput}
+                          disabled={!selectedGalaxy}
+                          onChange={(e) => {
+                            setCivSearchInput(e.target.value);
+                            setShowCivSuggestions(true);
+                          }}
+                          onFocus={() => setShowCivSuggestions(true)}
+                          onBlur={() => setTimeout(() => setShowCivSuggestions(false), 250)}
+                          className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 pr-10 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed placeholder-[#FFB451]/30 font-semibold"
+                        />
+                        {civSearchInput && selectedGalaxy && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onCivChange('');
+                              setCivSearchInput('');
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FFB451]/50 hover:text-[#FFB451] cursor-pointer hover:scale-110 active:scale-95 transition-all p-1"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {showCivSuggestions && selectedGalaxy && (
+                          <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-zinc-950 border border-[#FF0500] rounded-lg shadow-2xl">
+                            {filteredCivs.length > 0 ? (
+                              filteredCivs.map(c => (
+                                <div
+                                  key={c}
+                                  onMouseDown={() => {
+                                    onCivChange(c);
+                                    setShowCivSuggestions(false);
+                                  }}
+                                  className={`p-2.5 text-sm text-[#FFB451] hover:bg-[#E25530] hover:text-black font-semibold cursor-pointer transition-colors ${
+                                    selectedCivilization === c ? 'bg-zinc-900 text-[#FFB451] border-l-2 border-[#FF0500]' : ''
+                                  }`}
+                                >
+                                  {c}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-2.5 text-xs text-zinc-500 font-mono italic">
+                                {t.noRegionsFound}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Region Select dropdown */}
@@ -901,6 +1025,30 @@ export default function App() {
                       <div className="flex justify-between text-[10px] text-[#FFB451]/75">
                         <span>{t.lengthLabel}: {glyphInput.length} / 12</span>
                         <span>{t.validKeysLabel}</span>
+                      </div>
+                    </div>
+
+                    {/* Quickglyph selection row */}
+                    <div className="space-y-1.5 pt-2 border-t border-zinc-900/50">
+                      <label className="text-[10px] block text-[#FFB451]/70 uppercase tracking-widest font-mono">
+                        {lang === 'es' ? 'Teclado de Glifos Rápido' : lang === 'fr' ? 'Clavier rapide de glyphes' : lang === 'de' ? 'Glyphen-Schnellwahltasten' : lang === 'pt' ? 'Teclado de Glifos Rápido' : 'Quick Glyph Input Keys'}
+                      </label>
+                      <div 
+                        className="grid gap-1 p-1 bg-zinc-900/35 rounded-lg border border-[#FF0500]/20"
+                        style={{ gridTemplateColumns: 'repeat(8, minmax(0, 1fr))' }}
+                      >
+                        {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'].map((char) => (
+                          <button
+                            key={char}
+                            type="button"
+                            onClick={() => handleGlyphButtonClick(char)}
+                            title={glyphTranslations[lang]?.[char]?.name || char}
+                            className="bg-zinc-950/70 border border-[#FF0500]/30 hover:border-[#FFB451] hover:bg-[#E25530]/20 text-center py-1.5 text-base font-glyphs rounded cursor-pointer transition-all text-[#FFB451] flex flex-col items-center justify-center relative group active:scale-95"
+                          >
+                            <span className="font-glyphs select-none">{char}</span>
+                            <span className="text-[8px] font-mono leading-none text-[#FFB451]/40 group-hover:text-[#FFB451] mt-0.5 select-none">{char}</span>
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1235,17 +1383,11 @@ export default function App() {
                   <div className="flex items-center gap-2 text-[#FFB451]">
                     <TrendingUp className="w-4 h-4 text-[#FFB451]" />
                     <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-[#FFB451]">
-                      Fandom wiki cargo synchronization
+                      Region, civ and coordinate  DB Sync
                     </h4>
                   </div>
-                  <p className="text-[#FFB451] text-[11px] leading-relaxed">
-                    * Retrieves the latest civilized galaxies, hubs, and coordinates database directly from Fandom cargo tables recursively.
-                  </p>
-                  <p className="text-[#FFB451] text-[11px] leading-relaxed">
-                    * Runs a throttling process with 35s intervals to protect Wiki APIs from rate-limits.
-                  </p>
                   <p className="text-[#FFB451] text-[10px] font-mono leading-none pt-1">
-                    * Sync refresh may take up to 5 minutes to complete
+                    * Sync refresh may take up to 10 minutes to complete
                   </p>
                 </div>
 
