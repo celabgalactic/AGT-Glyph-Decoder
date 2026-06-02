@@ -40,7 +40,7 @@ export interface SyncProgress {
   statusText: string;
 }
 
-export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'pt';
+export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'it' | 'th' | 'hi' | 'zh' | 'ja';
 
 export interface GlyphMetadata {
   char: string;

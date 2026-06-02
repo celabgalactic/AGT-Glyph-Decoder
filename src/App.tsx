@@ -1303,7 +1303,7 @@ export default function App() {
         {showSettings && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
             <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
+               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-lg bg-zinc-950 border border-[#FF0500] rounded-xl p-6 shadow-2xl relative space-y-6 overflow-y-auto max-h-[85vh] text-[#FFB451]"
@@ -1313,7 +1313,7 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <Settings className="w-5 h-5 text-[#FFB451]" />
                   <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
-                    Settings
+                    {t.settingsTitle}
                   </span>
                 </div>
                 <button 
@@ -1327,7 +1327,7 @@ export default function App() {
               {/* Language pull-down selection */}
               <div className="space-y-2">
                 <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  Language Selection / Idioma / Langue:
+                  {t.settingsLanguageLabel}
                 </label>
                 <div className="relative">
                   <select 
@@ -1348,7 +1348,7 @@ export default function App() {
               {/* Audio mute settings toggle */}
               <div className="space-y-2">
                 <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  Background Audio
+                  {t.settingsAgtAnthemLabel}
                 </label>
                 <button
                   onClick={toggleMute}
@@ -1357,12 +1357,12 @@ export default function App() {
                   {muted ? (
                     <>
                       <VolumeX className="w-4 h-4 text-black" />
-                      <span>Unmute Background</span>
+                      <span>{t.settingsUnmuteBtn}</span>
                     </>
                   ) : (
                     <>
                       <Volume2 className="w-4 h-4 text-black" />
-                      <span>Mute Background</span>
+                      <span>{t.settingsMuteBtn}</span>
                     </>
                   )}
                 </button>
@@ -1371,7 +1371,7 @@ export default function App() {
               {/* Desktop Text Scale settings */}
               <div className="space-y-2">
                 <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  Desktop Text Scale
+                  {t.settingsTextScaleLabel}
                 </label>
                 <div className="relative">
                   <select 
@@ -1380,7 +1380,7 @@ export default function App() {
                     onChange={handleTextScaleChange}
                     className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
                   >
-                    <option value="1x" className="bg-zinc-950 text-[#FFB451]">1x (Default)</option>
+                    <option value="1x" className="bg-zinc-950 text-[#FFB451]">{t.settingsScaleDefault}</option>
                     <option value="1.5x" className="bg-zinc-950 text-[#FFB451]">1.5x</option>
                     <option value="2x" className="bg-zinc-950 text-[#FFB451]">2x</option>
                     <option value="2.5x" className="bg-zinc-950 text-[#FFB451]">2.5x</option>
@@ -1395,11 +1395,11 @@ export default function App() {
                   <div className="flex items-center gap-2 text-[#FFB451]">
                     <TrendingUp className="w-4 h-4 text-[#FFB451]" />
                     <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-[#FFB451]">
-                      Region, civ and coordinate  DB Sync
+                      {t.settingsSyncDbTitle}
                     </h4>
                   </div>
                   <p className="text-[#FFB451] text-[10px] font-mono leading-none pt-1">
-                    * Sync refresh may take up to 10 minutes to complete
+                    {t.settingsSyncDbNote}
                   </p>
                 </div>
 

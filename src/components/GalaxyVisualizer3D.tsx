@@ -7,7 +7,8 @@ import {
   RefreshCcw, 
   Grid, 
   Compass, 
-  Maximize2 
+  Maximize2,
+  Minimize2 
 } from 'lucide-react';
 import { translations } from '../translations';
 import { SupportedLanguage } from '../types';
@@ -29,6 +30,7 @@ interface Star {
 
 export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordinates, galaxyName, lang = 'en' }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   
   const t = translations[lang] || translations.en;
   
@@ -38,10 +40,85 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
   const [zoom, setZoom] = useState<number>(220); // zoom sensitivity multiplier
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
   const [showGrid, setShowGrid] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   
   // For mouse drag action tracker
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const lastMousePos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Handle Fullscreen toggle
+  const toggleFullscreen = async () => {
+    if (!containerRef.current) return;
+    try {
+      if (!isFullscreen) {
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          await (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          await (containerRef.current as any).mozRequestFullScreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          await (containerRef.current as any).msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.warn("Fullscreen API failed/blocked, falling back to CSS fullscreen mode:", err);
+      setIsFullscreen(prev => !prev);
+    }
+  };
+
+  // Sync isFullscreen state with native escape key behavior and changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Exit fallback modal-style fullscreen on ESC keypress
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen]);
 
   // Generate a consistent, stable array of stars representing a spiral galaxy (4 Arms + Core cluster)
   const stars: Star[] = useMemo(() => {
@@ -373,10 +450,12 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
     };
   }, [yaw, pitch, zoom, autoRotate, showGrid, isDragging, coordinates, stars]);
 
-  // Adjust canvas scale ratio for dynamic HighDPI retinas
+  // Adjust canvas scale ratio with ResizeObserver + Orientation changes to handle mobile tablet rotations
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
 
     const handleResize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -390,11 +469,34 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
       }
     };
 
-    handleResize();
+    // Responsive Canvas container size tracking
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(parent);
+
+    // Explicit orientation change listeners
     window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    let screenOrientationListener: () => void;
+    if (typeof window !== 'undefined' && window.screen && window.screen.orientation) {
+      screenOrientationListener = () => {
+        // Delay slightly for paint/layout updates on fast rotations
+        setTimeout(handleResize, 100);
+      };
+      window.screen.orientation.addEventListener('change', screenOrientationListener);
+    }
+
+    handleResize();
 
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      if (screenOrientationListener && window.screen && window.screen.orientation) {
+        window.screen.orientation.removeEventListener('change', screenOrientationListener);
+      }
     };
   }, []);
 
@@ -455,7 +557,13 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
   };
 
   return (
-    <div className="bg-zinc-950/90 border border-[#FF0500] rounded-xl overflow-hidden p-4 shadow-2xl relative z-10 space-y-3">
+    <div 
+      ref={containerRef}
+      className={isFullscreen 
+        ? "fixed inset-0 z-50 bg-[#050505] p-6 flex flex-col justify-between overflow-hidden text-[#FFB451] select-none" 
+        : "bg-zinc-950/90 border border-[#FF0500] rounded-xl overflow-hidden p-4 shadow-2xl relative z-10 space-y-3 text-[#FFB451]"
+      }
+    >
       {/* Title block */}
       <div className="flex items-center justify-between border-b border-zinc-900 pb-2.5">
         <div className="flex items-center gap-2">
@@ -478,7 +586,12 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
       </div>
 
       {/* Interactive canvas module */}
-      <div className="relative w-full aspect-video md:aspect-[16/10] bg-zinc-950 rounded-lg overflow-hidden border border-[#FF0500]/30 select-none cursor-grab active:cursor-grabbing">
+      <div 
+        className={isFullscreen
+          ? "relative w-full flex-1 bg-zinc-950 rounded-lg overflow-hidden border border-[#FF0500]/30 select-none cursor-grab active:cursor-grabbing min-h-0 my-4"
+          : "relative w-full aspect-video md:aspect-[16/10] bg-zinc-950 rounded-lg overflow-hidden border border-[#FF0500]/30 select-none cursor-grab active:cursor-grabbing"
+        }
+      >
         <canvas
           ref={canvasRef}
           onMouseDown={handleMouseDown}
@@ -536,6 +649,13 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
             className="p-1.5 rounded bg-zinc-950 hover:bg-zinc-800 text-[#FFB451] border border-zinc-800 transition-colors cursor-pointer"
           >
             <RefreshCcw className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? t.exitFullscreen : t.toggleFullscreen}
+            className="p-1.5 rounded bg-zinc-950 hover:bg-zinc-800 text-[#FFB451] border border-zinc-800 transition-colors cursor-pointer"
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
         </div>
 
