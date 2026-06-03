@@ -151,7 +151,7 @@ export function glyphs2Coords(glyphs: string): string {
   const cleanGlyphs = glyphs.trim().toUpperCase().replace(/[^0-9A-F]/g, '');
   if (cleanGlyphs.length !== 12) return '';
 
-  const sStr = cleanGlyphs.slice(0, 4);
+  const sStr = '0' + cleanGlyphs.slice(1, 4);
   const yStr = cleanGlyphs.slice(4, 6);
   const zStr = cleanGlyphs.slice(6, 9);
   const xStr = cleanGlyphs.slice(9, 12);
