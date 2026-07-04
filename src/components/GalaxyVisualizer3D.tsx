@@ -34,17 +34,55 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
   
   const t = translations[lang] || translations.en;
   
-  // Interactive navigation states
-  const [yaw, setYaw] = useState<number>(1.2); // vertical/horizontal angle
-  const [pitch, setPitch] = useState<number>(0.4); // vertical look angle
-  const [zoom, setZoom] = useState<number>(220); // zoom sensitivity multiplier
-  const [autoRotate, setAutoRotate] = useState<boolean>(true);
-  const [showGrid, setShowGrid] = useState<boolean>(true);
+  // Interactive navigation states and refs to prevent infinite update render loop
+  const yawRef = useRef<number>(1.2);
+  const pitchRef = useRef<number>(0.4);
+  const zoomRef = useRef<number>(220);
+  const autoRotateRef = useRef<boolean>(true);
+  const showGridRef = useRef<boolean>(true);
+  const isDraggingRef = useRef<boolean>(false);
+
+  const [autoRotate, setAutoRotateState] = useState<boolean>(true);
+  const [showGrid, setShowGridState] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   
   // For mouse drag action tracker
-  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isDragging, setIsDraggingState] = useState<boolean>(false);
   const lastMousePos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Wrappers to update refs and states to maintain standard API
+  const setYaw = (val: number | ((prev: number) => number)) => {
+    const nextVal = typeof val === 'function' ? val(yawRef.current) : val;
+    yawRef.current = nextVal;
+  };
+
+  const setPitch = (val: number | ((prev: number) => number)) => {
+    const nextVal = typeof val === 'function' ? val(pitchRef.current) : val;
+    pitchRef.current = nextVal;
+  };
+
+  const setZoom = (val: number | ((prev: number) => number)) => {
+    const nextVal = typeof val === 'function' ? val(zoomRef.current) : val;
+    zoomRef.current = nextVal;
+  };
+
+  const setAutoRotate = (val: boolean | ((prev: boolean) => boolean)) => {
+    const nextVal = typeof val === 'function' ? val(autoRotateRef.current) : val;
+    autoRotateRef.current = nextVal;
+    setAutoRotateState(nextVal);
+  };
+
+  const setShowGrid = (val: boolean | ((prev: boolean) => boolean)) => {
+    const nextVal = typeof val === 'function' ? val(showGridRef.current) : val;
+    showGridRef.current = nextVal;
+    setShowGridState(nextVal);
+  };
+
+  const setIsDragging = (val: boolean | ((prev: boolean) => boolean)) => {
+    const nextVal = typeof val === 'function' ? val(isDraggingRef.current) : val;
+    isDraggingRef.current = nextVal;
+    setIsDraggingState(nextVal);
+  };
 
   // Handle Fullscreen toggle
   const toggleFullscreen = async () => {
@@ -189,16 +227,14 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
     return list;
   }, []);
 
-  // Update loop using dynamic animation ticks
+  // Update loop using dynamic animation ticks with refs to prevent state-update re-render thrashing
   useEffect(() => {
     let animationFrameId: number;
-    let localYaw = yaw;
 
     const render = () => {
       // Auto rotation update
-      if (autoRotate && !isDragging) {
-        localYaw += 0.0035;
-        setYaw(prev => (prev + 0.0035) % (Math.PI * 2));
+      if (autoRotateRef.current && !isDraggingRef.current) {
+        yawRef.current = (yawRef.current + 0.0035) % (Math.PI * 2);
       }
 
       const canvas = canvasRef.current;
@@ -224,14 +260,14 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
       // 3D Projection functions
       const project = (px: number, py: number, pz: number) => {
         // Rotate around Y-axis (Yaw)
-        const cosY = Math.cos(localYaw);
-        const sinY = Math.sin(localYaw);
+        const cosY = Math.cos(yawRef.current);
+        const sinY = Math.sin(yawRef.current);
         const xRotate = px * cosY - pz * sinY;
         const zRotate = px * sinY + pz * cosY;
 
         // Rotate around X-axis (Pitch)
-        const cosX = Math.cos(pitch);
-        const sinX = Math.sin(pitch);
+        const cosX = Math.cos(pitchRef.current);
+        const sinX = Math.sin(pitchRef.current);
         const yRotate = py * cosX - zRotate * sinX;
         const zDepth = py * sinX + zRotate * cosX; // Depth factor
 
@@ -241,15 +277,15 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
         const perspective = 2.0 / (2.1 - zDepth); 
         
         return {
-          x: centerX + xRotate * zoom * perspective,
-          y: centerY + yRotate * zoom * perspective,
+          x: centerX + xRotate * zoomRef.current * perspective,
+          y: centerY + yRotate * zoomRef.current * perspective,
           depth: zDepth,
           scale: perspective
         };
       };
 
       // 1. Draw central coordinate grid base for technical feeling
-      if (showGrid) {
+      if (showGridRef.current) {
         ctx.strokeStyle = 'rgba(255, 180, 81, 0.08)';
         ctx.lineWidth = 1;
 
@@ -355,7 +391,7 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
         ctx.strokeStyle = 'rgba(255, 5, 0, 0.4)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.ellipse(projFloor.x, projFloor.y, 6 * projFloor.scale, 2 * projFloor.scale * Math.abs(Math.sin(pitch)), 0, 0, Math.PI * 2);
+        ctx.ellipse(projFloor.x, projFloor.y, 6 * projFloor.scale, 2 * projFloor.scale * Math.abs(Math.sin(pitchRef.current)), 0, 0, Math.PI * 2);
         ctx.stroke();
 
         // Pulsating system marker halo
@@ -425,14 +461,14 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
       ctx.stroke();
 
       // Dynamic arrow towards Galactic Center
-      const rotCenterX = -localYaw;
+      const rotCenterX = -yawRef.current;
       const dx = Math.cos(rotCenterX);
       const dy = Math.sin(rotCenterX);
       
       ctx.strokeStyle = '#FF0500';
       ctx.beginPath();
       ctx.moveTo(compX, compY);
-      ctx.lineTo(compX + dx * 16, compY + dy * 16 * Math.sin(pitch));
+      ctx.lineTo(compX + dx * 16, compY + dy * 16 * Math.sin(pitchRef.current));
       ctx.stroke();
 
       ctx.fillStyle = '#FFB451';
@@ -448,7 +484,7 @@ export const GalaxyVisualizer3D: React.FC<GalaxyVisualizer3DProps> = ({ coordina
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [yaw, pitch, zoom, autoRotate, showGrid, isDragging, coordinates, stars]);
+  }, [coordinates, stars, lang]);
 
   // Adjust canvas scale ratio with ResizeObserver + Orientation changes to handle mobile tablet rotations
   useEffect(() => {

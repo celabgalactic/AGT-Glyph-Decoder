@@ -103,7 +103,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     noRegionsFound: "No regions found",
     loadError: "Error loading data",
     fetchError: "Error fetching data",
-    regionSelection: "Region Selection",
+    regionSelection: "Select a Civ Region",
     galaxy: "Galaxy",
     civilization: "Civilization",
     region: "Region",
@@ -120,7 +120,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     syncStatusIdle: "Database is updated with static presets. Perform online sync if needed.",
     syncStatusRunning: "Updating database from Fandom NMS Wiki...",
 
-    exactLocationTitle: "Exact Location",
+    exactLocationTitle: "Convert Coordinates/Glyphs",
     clearFields: "Clear Fields",
     galacticCoordinatesLabel: "GALACTIC COORDINATES (XXXX:YYYY:ZZZZ:SSSS)",
     glyphs12CharsLabel: "Glyphs (12 Characters)",
