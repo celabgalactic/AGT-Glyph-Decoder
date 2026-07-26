@@ -122,6 +122,9 @@ export function validateGlyphInput(glyphString: string): string {
 export function coords2Glyphs(coordinates: string): string {
   if (!coordinates || typeof coordinates !== 'string') return '';
   const parts = coordinates.trim().split(':');
+  if (parts.length === 3) {
+    parts.push('0000');
+  }
   if (parts.length !== 4) return '';
   const [xStr, yStr, zStr, sStr] = parts;
   const coords_x = parseInt(xStr, 16);
@@ -142,7 +145,8 @@ export function coords2Glyphs(coordinates: string): string {
   const yGlyphHex = (y_glyph & 0xFF).toString(16).toUpperCase().padStart(2, '0');
   const zGlyphHex = (z_glyph & 0xFFF).toString(16).toUpperCase().padStart(3, '0');
 
-  const system_hex = sStr ? sStr.toUpperCase().padStart(4, '0') : '0000';
+  const cleanS = sStr ? sStr.toUpperCase().replace(/[^0-9A-F]/g, '') : '';
+  const system_hex = cleanS ? cleanS.padStart(4, '0') : '0000';
   return system_hex + yGlyphHex + zGlyphHex + xGlyphHex;
 }
 

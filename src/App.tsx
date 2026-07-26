@@ -29,10 +29,19 @@ import {
   ShieldAlert,
   Bug,
   Star,
-  Edit2
+  Edit2,
+  FileSpreadsheet,
+  FileJson,
+  Upload,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  FileText,
+  History
 } from 'lucide-react';
 import { 
   DatabaseState, 
+  GalaxyData,
   SupportedLanguage, 
   SyncProgress, 
   RegionInfo 
@@ -55,12 +64,102 @@ const FANDOM_API_PATH = 'https://nomanssky.fandom.com/api.php';
 
 interface FavoriteSequence {
   id: string;
+  name?: string;
   sequence: string;
   galaxy?: string;
   civilization?: string;
   region?: string;
   coordinates?: string;
   createdAt: string;
+}
+
+interface ChangeLogGroup {
+  date: string;
+  changes: string[];
+}
+
+function parseCSV(text: string): string[][] {
+  const lines: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        cell += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      row.push(cell);
+      cell = '';
+    } else if ((char === '\r' || char === '\n') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++;
+      }
+      row.push(cell);
+      if (row.some(c => c.trim().length > 0)) {
+        lines.push(row);
+      }
+      row = [];
+      cell = '';
+    } else {
+      cell += char;
+    }
+  }
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell);
+    if (row.some(c => c.trim().length > 0)) {
+      lines.push(row);
+    }
+  }
+  return lines;
+}
+
+function processChangeLogCSV(csvText: string): ChangeLogGroup[] {
+  const rows = parseCSV(csvText);
+  const groups: ChangeLogGroup[] = [];
+  let currentDate = '';
+
+  for (const row of rows) {
+    if (!row || row.length === 0) continue;
+
+    const colA = (row[0] || '').trim();
+    const colB = (row.slice(1).join(',') || '').trim();
+
+    if (colA.toLowerCase() === 'date' && colB.toLowerCase() === 'changes') {
+      continue;
+    }
+
+    if (!colA && !colB) {
+      continue;
+    }
+
+    if (colA) {
+      currentDate = colA;
+      const newGroup: ChangeLogGroup = {
+        date: currentDate,
+        changes: colB ? [colB] : []
+      };
+      groups.push(newGroup);
+    } else if (currentDate && colB) {
+      if (groups.length > 0) {
+        groups[groups.length - 1].changes.push(colB);
+      } else {
+        groups.push({
+          date: currentDate,
+          changes: [colB]
+        });
+      }
+    }
+  }
+
+  return groups;
 }
 
 const favoritesTranslations: Record<SupportedLanguage, {
@@ -436,9 +535,36 @@ export default function App() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [settingsRotation, setSettingsRotation] = useState<number>(0);
   const [showFavoritesModal, setShowFavoritesModal] = useState<boolean>(false);
+  const [showChangeLogModal, setShowChangeLogModal] = useState<boolean>(false);
+  const [changeLogGroups, setChangeLogGroups] = useState<ChangeLogGroup[]>([]);
+  const [changeLogLoading, setChangeLogLoading] = useState<boolean>(false);
+  const [changeLogError, setChangeLogError] = useState<string | null>(null);
+
+  const fetchChangeLog = async () => {
+    setChangeLogLoading(true);
+    setChangeLogError(null);
+    try {
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5oPutHGlK-X_5TqRo23a7vQ_cuiY2a5Puq1VWP05it1tx5GCswVf1-VzlSMIYJ_sZOW0yCSIsZ5PN/pub?gid=0&single=true&output=csv';
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch change log (${res.status})`);
+      }
+      const text = await res.text();
+      const parsedGroups = processChangeLogCSV(text);
+      setChangeLogGroups(parsedGroups);
+    } catch (err: any) {
+      setChangeLogError(err?.message || 'Error loading change log. Please check your network connection.');
+    } finally {
+      setChangeLogLoading(false);
+    }
+  };
   const [editingFavId, setEditingFavId] = useState<string | null>(null);
   const [tempFavName, setTempFavName] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'default' | 'galaxy' | 'civilization'>('default');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const jsonFileInputRef = useRef<HTMLInputElement>(null);
 
   // Desktop text scaling state
   const [desktopTextScale, setDesktopTextScale] = useState<string>(() => {
@@ -464,7 +590,8 @@ export default function App() {
   // Render a dynamic stylesheet for desktop scaling
   const scaleStyleStyle = useMemo(() => {
     if (desktopTextScale === '1x') return null;
-    const factor = desktopTextScale === '1.5x' ? 1.5 :
+    const factor = desktopTextScale === '1.25x' ? 1.25 :
+                   desktopTextScale === '1.5x' ? 1.5 :
                    desktopTextScale === '2x' ? 2 :
                    desktopTextScale === '2.5x' ? 2.5 :
                    desktopTextScale === '3x' ? 3 : 1;
@@ -562,8 +689,24 @@ export default function App() {
   // Core Database and Dropdowns State
   const [database, setDatabase] = useState<DatabaseState | null>(null);
   const [loadingDb, setLoadingDb] = useState(true);
-  const [dbLastUpdated, setDbLastUpdated] = useState<string | null>(null);
-  const [dbLastUpdatedRaw, setDbLastUpdatedRaw] = useState<string | null>(null);
+
+  // Database Provider & Timestamps State
+  const [dbProvider, setDbProvider] = useState<'fandom' | 'agt'>(() => {
+    const saved = localStorage.getItem('nms_db_provider');
+    return (saved === 'agt' || saved === 'fandom') ? saved : 'fandom';
+  });
+
+  const [fandomDbLastUpdated, setFandomDbLastUpdated] = useState<string | null>(null);
+  const [fandomDbLastUpdatedRaw, setFandomDbLastUpdatedRaw] = useState<string | null>(null);
+
+  const [agtDbLastUpdated, setAgtDbLastUpdated] = useState<string | null>(null);
+  const [agtDbLastUpdatedRaw, setAgtDbLastUpdatedRaw] = useState<string | null>(null);
+
+  const [agtSyncing, setAgtSyncing] = useState<boolean>(false);
+  const [agtSyncStatusText, setAgtSyncStatusText] = useState<string>('');
+
+  const currentActiveDbLastUpdated = dbProvider === 'agt' ? agtDbLastUpdated : fandomDbLastUpdated;
+  const currentActiveDbLastUpdatedRaw = dbProvider === 'agt' ? agtDbLastUpdatedRaw : fandomDbLastUpdatedRaw;
   
   const [selectedGalaxy, setSelectedGalaxy] = useState<string>('');
   const [selectedCivilization, setSelectedCivilization] = useState<string>('');
@@ -777,6 +920,161 @@ export default function App() {
     setEditingFavId(null);
   };
 
+  const exportFavoritesCSV = () => {
+    if (favorites.length === 0) return;
+    const headers = ['Name', 'Sequence', 'Galaxy', 'Civilization', 'Region', 'Coordinates', 'CreatedAt'];
+    const escapeCSV = (str: string) => {
+      if (!str) return '""';
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return `"${str}"`;
+    };
+
+    const rows = favorites.map(f => [
+      f.name || '',
+      f.sequence || '',
+      f.galaxy || '',
+      f.civilization || '',
+      f.region || '',
+      f.coordinates || '',
+      f.createdAt || ''
+    ]);
+
+    const csvContent = [
+      headers.map(escapeCSV).join(','),
+      ...rows.map(row => row.map(escapeCSV).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `nms_favorites_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportFavoritesJSON = () => {
+    if (favorites.length === 0) return;
+    const dataStr = JSON.stringify(favorites, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `nms_favorites_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportJSON = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+        const itemsToImport = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.favorites) ? parsed.favorites : null);
+
+        if (!itemsToImport) {
+          setImportStatus('Error: Invalid format. Expected JSON array of favorites.');
+          setTimeout(() => setImportStatus(null), 4000);
+          return;
+        }
+
+        let validCount = 0;
+        const newItems: FavoriteSequence[] = [];
+
+        itemsToImport.forEach((item: any) => {
+          if (item && typeof item === 'object') {
+            const sequence = String(item.sequence || '').trim().toUpperCase();
+            if (sequence.length === 12) {
+              newItems.push({
+                id: item.id && typeof item.id === 'string' ? item.id : `fav-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                name: item.name ? String(item.name).slice(0, 42) : undefined,
+                sequence: sequence,
+                galaxy: item.galaxy ? String(item.galaxy) : undefined,
+                civilization: item.civilization ? String(item.civilization) : undefined,
+                region: item.region ? String(item.region) : undefined,
+                coordinates: item.coordinates ? String(item.coordinates) : undefined,
+                createdAt: item.createdAt ? String(item.createdAt) : new Date().toISOString()
+              });
+              validCount++;
+            }
+          }
+        });
+
+        if (validCount === 0) {
+          setImportStatus('Error: No valid 12-glyph sequence items found.');
+          setTimeout(() => setImportStatus(null), 4000);
+          return;
+        }
+
+        setFavorites(prev => {
+          const existingIds = new Set(prev.map(f => f.id));
+          const existingKeys = new Set(prev.map(f => `${f.sequence}-${f.galaxy || ''}-${f.civilization || ''}`));
+
+          const deduplicated = newItems.filter(item => {
+            const key = `${item.sequence}-${item.galaxy || ''}-${item.civilization || ''}`;
+            if (existingIds.has(item.id) || existingKeys.has(key)) {
+              return false;
+            }
+            return true;
+          });
+
+          return [...deduplicated, ...prev];
+        });
+
+        setImportStatus(`Imported ${validCount} favorite(s)!`);
+        setTimeout(() => setImportStatus(null), 4000);
+      } catch (err) {
+        setImportStatus('Error parsing JSON file.');
+        setTimeout(() => setImportStatus(null), 4000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const sortedFavorites = useMemo(() => {
+    if (sortBy === 'default') {
+      return favorites;
+    }
+
+    return [...favorites].sort((a, b) => {
+      let primaryA = '';
+      let primaryB = '';
+
+      if (sortBy === 'galaxy') {
+        primaryA = (a.galaxy || '').trim().toLowerCase();
+        primaryB = (b.galaxy || '').trim().toLowerCase();
+      } else if (sortBy === 'civilization') {
+        primaryA = (a.civilization || '').trim().toLowerCase();
+        primaryB = (b.civilization || '').trim().toLowerCase();
+      }
+
+      if (primaryA !== primaryB) {
+        if (!primaryA) return 1;
+        if (!primaryB) return -1;
+        const comp = primaryA.localeCompare(primaryB);
+        return sortOrder === 'asc' ? comp : -comp;
+      }
+
+      // Secondary sort: within a galaxy or civ in ascending order based on coordinates (or sequence)
+      const coordA = (a.coordinates || a.sequence || '').trim().toLowerCase();
+      const coordB = (b.coordinates || b.sequence || '').trim().toLowerCase();
+
+      const secondaryComp = coordA.localeCompare(coordB);
+      return sortOrder === 'asc' ? secondaryComp : -secondaryComp;
+    });
+  }, [favorites, sortBy, sortOrder]);
+
   const handleCopy = (id: string, seq: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(seq);
@@ -858,54 +1156,232 @@ export default function App() {
     }
   }, []);
 
+  // Fetch AGT Region Database from Google Sheet CSV
+  const fetchAgtDatabase = async () => {
+    setAgtSyncing(true);
+    setAgtSyncStatusText('Downloading AGT Region Database...');
+    try {
+      const AGT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0jFq80ut0o5jtApdhRG8sR2CIufVn0FNcugR_7fdCIfrDRfgB9s-SvEhBAePrQCibr1RcxFVoXj7o/pub?gid=354119689&single=true&output=csv';
+      const res = await fetch(AGT_CSV_URL);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch AGT Sheet CSV (${res.status})`);
+      }
+      const csvText = await res.text();
+      setAgtSyncStatusText('Parsing AGT Region Data...');
+
+      const rows = parseCSV(csvText);
+      const dataObj: { [galaxyName: string]: GalaxyData } = {};
+      const galaxiesSet = new Set<string>();
+
+      // Ignore rows 1 and 2 (indices 0 and 1)
+      for (let i = 2; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
+
+        const colA = (row[0] || '').trim(); // Region name
+        if (!colA || colA.toUpperCase().includes('SKIPROW')) {
+          continue; // Ignore row with SKIPROW in Column A
+        }
+
+        const colB = (row[1] || '').trim(); // Galaxy
+        const colC = (row[2] || '').trim(); // Civilization
+        const colD = (row[3] || '').trim(); // Coordinates core string
+
+        if (!colB || !colC) continue;
+
+        // Ignoring the last 5 characters of the coordinate string
+        const coreCoords = colD.length >= 5 ? colD.slice(0, colD.length - 5) : colD;
+
+        galaxiesSet.add(colB);
+
+        if (!dataObj[colB]) {
+          dataObj[colB] = {
+            civilizations: [],
+            regions: {}
+          };
+        }
+
+        if (!dataObj[colB].regions[colC]) {
+          dataObj[colB].regions[colC] = [];
+        }
+
+        if (!dataObj[colB].regions[colC].some(r => r.name === colA)) {
+          dataObj[colB].regions[colC].push({
+            name: colA,
+            coordinates: coreCoords
+          });
+        }
+      }
+
+      const listGalaxies = Array.from(galaxiesSet).sort((a, b) => a.localeCompare(b));
+      listGalaxies.forEach(gal => {
+        const galData = dataObj[gal];
+        if (galData) {
+          const civSet = new Set<string>(Object.keys(galData.regions));
+          galData.civilizations = Array.from(civSet).sort((a, b) => a.localeCompare(b));
+          Object.keys(galData.regions).forEach(civ => {
+            galData.regions[civ].sort((a, b) => a.name.localeCompare(b.name));
+          });
+        }
+      });
+
+      const newDb: DatabaseState = {
+        galaxies: listGalaxies,
+        data: dataObj
+      };
+
+      const nowIso = new Date().toISOString();
+      const nowStr = new Date(nowIso).toLocaleString();
+
+      localStorage.setItem('nms_agt_db_cache', JSON.stringify(newDb));
+      localStorage.setItem('nms_agt_db_cache_updated_at', nowStr);
+      localStorage.setItem('nms_agt_db_cache_updated_at_raw', nowIso);
+
+      setAgtDbLastUpdated(nowStr);
+      setAgtDbLastUpdatedRaw(nowIso);
+
+      const currentProv = localStorage.getItem('nms_db_provider') || 'fandom';
+      if (currentProv === 'agt') {
+        setDatabase(newDb);
+      }
+
+      setAgtSyncStatusText('AGT Region Database update complete.');
+    } catch (err: any) {
+      console.error('Error fetching AGT DB:', err);
+      setAgtSyncStatusText(`Sync error: ${err?.message || 'Failed'}`);
+    } finally {
+      setAgtSyncing(false);
+    }
+  };
+
+  const handleSelectDbProvider = async (provider: 'fandom' | 'agt') => {
+    if (provider === dbProvider) return;
+    setDbProvider(provider);
+    localStorage.setItem('nms_db_provider', provider);
+
+    if (provider === 'agt') {
+      const agtCached = localStorage.getItem('nms_agt_db_cache');
+      if (agtCached) {
+        try {
+          const parsed = JSON.parse(agtCached);
+          if (parsed && parsed.data && parsed.galaxies) {
+            setDatabase(parsed);
+            return;
+          }
+        } catch (e) {
+          console.error('Error loading AGT cache:', e);
+        }
+      }
+      await fetchAgtDatabase();
+    } else {
+      const fandomCached = localStorage.getItem(CIVILIZATIONS_CACHE_KEY);
+      if (fandomCached) {
+        try {
+          const parsed = JSON.parse(fandomCached);
+          if (parsed && parsed.data && parsed.galaxies) {
+            setDatabase(parsed);
+            return;
+          }
+        } catch (e) {
+          console.error('Error loading Fandom cache:', e);
+        }
+      }
+      try {
+        let response = await fetch('/assets/defaultData/defaultData.json');
+        if (!response.ok) {
+          response = await fetch('/public/assets/defaultData/defaultData.json');
+        }
+        if (response.ok) {
+          const data = await response.json();
+          setDatabase(data);
+        }
+      } catch (err) {
+        console.error('Error loading static default DB:', err);
+      }
+    }
+  };
+
   // Load database on start
   useEffect(() => {
     async function initDb() {
       try {
         setLoadingDb(true);
-        // Check for cached databases first
-        const cacheTime = localStorage.getItem(CIVILIZATIONS_CACHE_KEY + '_updated_at');
-        const cacheTimeRaw = localStorage.getItem(CIVILIZATIONS_CACHE_KEY + '_updated_at_raw');
-        const cached = localStorage.getItem(CIVILIZATIONS_CACHE_KEY);
-        if (cached) {
+
+        // Check Fandom cache info
+        const fandomCacheTime = localStorage.getItem(CIVILIZATIONS_CACHE_KEY + '_updated_at');
+        const fandomCacheTimeRaw = localStorage.getItem(CIVILIZATIONS_CACHE_KEY + '_updated_at_raw');
+        const fandomCached = localStorage.getItem(CIVILIZATIONS_CACHE_KEY);
+
+        let fandomDbObj: DatabaseState | null = null;
+        if (fandomCached) {
           try {
-            const parsed = JSON.parse(cached);
+            const parsed = JSON.parse(fandomCached);
             if (parsed && parsed.data && parsed.galaxies) {
-              setDatabase(parsed);
-              if (cacheTime) {
-                setDbLastUpdated(cacheTime);
-                setDbLastUpdatedRaw(cacheTimeRaw || '2026-06-15T12:00:00.000Z');
-              } else {
-                const defTimeRaw = '2026-06-15T12:00:00.000Z';
-                const defTime = new Date(defTimeRaw).toLocaleString();
-                setDbLastUpdated(defTime);
-                setDbLastUpdatedRaw(defTimeRaw);
-                localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at', defTime);
-                localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at_raw', defTimeRaw);
-              }
-              setLoadingDb(false);
-              return;
+              fandomDbObj = parsed;
             }
           } catch (e) {
-            console.error('Failed to parse cached DB, fallback to file', e);
+            console.error('Failed to parse cached Fandom DB', e);
           }
         }
 
-        // Load static backend files
-        let response = await fetch('/assets/defaultData/defaultData.json');
-        if (!response.ok) {
-          response = await fetch('/public/assets/defaultData/defaultData.json');
+        if (fandomCacheTime) {
+          setFandomDbLastUpdated(fandomCacheTime);
+          setFandomDbLastUpdatedRaw(fandomCacheTimeRaw || '2026-06-15T12:00:00.000Z');
+        } else {
+          const defTimeRaw = '2026-06-15T12:00:00.000Z';
+          const defTime = new Date(defTimeRaw).toLocaleString();
+          setFandomDbLastUpdated(defTime);
+          setFandomDbLastUpdatedRaw(defTimeRaw);
+          localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at', defTime);
+          localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at_raw', defTimeRaw);
         }
-        if (!response.ok) throw new Error('Could not fetch defaultData.json');
-        
-        const data = await response.json();
-        setDatabase(data);
-        const defaultTimeRaw = '2026-06-15T12:00:00.000Z';
-        const defaultTime = new Date(defaultTimeRaw).toLocaleString();
-        setDbLastUpdated(defaultTime);
-        setDbLastUpdatedRaw(defaultTimeRaw);
-        localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at', defaultTime);
-        localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at_raw', defaultTimeRaw);
+
+        // Check AGT cache info
+        const agtCacheTime = localStorage.getItem('nms_agt_db_cache_updated_at');
+        const agtCacheTimeRaw = localStorage.getItem('nms_agt_db_cache_updated_at_raw');
+        const agtCached = localStorage.getItem('nms_agt_db_cache');
+
+        let agtDbObj: DatabaseState | null = null;
+        if (agtCached) {
+          try {
+            const parsed = JSON.parse(agtCached);
+            if (parsed && parsed.data && parsed.galaxies) {
+              agtDbObj = parsed;
+            }
+          } catch (e) {
+            console.error('Failed to parse cached AGT DB', e);
+          }
+        }
+
+        if (agtCacheTime) {
+          setAgtDbLastUpdated(agtCacheTime);
+          setAgtDbLastUpdatedRaw(agtCacheTimeRaw || null);
+        }
+
+        const currentProvider = (localStorage.getItem('nms_db_provider') as 'fandom' | 'agt') || 'fandom';
+        setDbProvider(currentProvider);
+
+        if (currentProvider === 'agt') {
+          if (agtDbObj) {
+            setDatabase(agtDbObj);
+          } else {
+            await fetchAgtDatabase();
+          }
+        } else {
+          if (fandomDbObj) {
+            setDatabase(fandomDbObj);
+          } else {
+            let response = await fetch('/assets/defaultData/defaultData.json');
+            if (!response.ok) {
+              response = await fetch('/public/assets/defaultData/defaultData.json');
+            }
+            if (response.ok) {
+              const data = await response.json();
+              setDatabase(data);
+              localStorage.setItem(CIVILIZATIONS_CACHE_KEY, JSON.stringify(data));
+            }
+          }
+        }
       } catch (err) {
         console.error('Error initializing database:', err);
       } finally {
@@ -1271,8 +1747,8 @@ export default function App() {
 
     const nowIso = new Date().toISOString();
     const nowStr = new Date(nowIso).toLocaleString();
-    setDbLastUpdated(nowStr);
-    setDbLastUpdatedRaw(nowIso);
+    setFandomDbLastUpdated(nowStr);
+    setFandomDbLastUpdatedRaw(nowIso);
     localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at', nowStr);
     localStorage.setItem(CIVILIZATIONS_CACHE_KEY + '_updated_at_raw', nowIso);
 
@@ -1393,19 +1869,19 @@ export default function App() {
             <div className="flex items-center gap-4">
               
               {/* Display the date and time stamp of when the Region Database cache was last updated */}
-              {dbLastUpdated && (
+              {currentActiveDbLastUpdated && (
                 <>
                   {/* Desktop view: colored labels */}
                   <div 
                     id="db-last-updated-timestamp" 
                     className="hidden md:flex flex-col items-end text-right font-mono text-[9px] sm:text-[10px]"
-                    style={{ color: getStatusColor(dbLastUpdatedRaw) }}
+                    style={{ color: getStatusColor(currentActiveDbLastUpdatedRaw) }}
                   >
                     <span className="uppercase text-[8px] tracking-wider font-bold leading-tight">
-                      Database Last Updated
+                      {dbProvider === 'agt' ? 'AGT DB Last Updated' : 'Fandom DB Last Updated'}
                     </span>
                     <span className="opacity-90 font-medium whitespace-nowrap">
-                      {dbLastUpdated}
+                      {currentActiveDbLastUpdated}
                     </span>
                   </div>
 
@@ -1414,12 +1890,12 @@ export default function App() {
                     id="db-last-updated-mobile-dot"
                     onClick={() => setShowSettings(true)}
                     className="flex md:hidden p-2 -m-2 cursor-pointer items-center justify-center shrink-0"
-                    title="Database Status (Click to open settings)"
+                    title={`${dbProvider === 'agt' ? 'AGT DB' : 'Fandom DB'} Status (Click to open settings)`}
                     aria-label="Database Status"
                   >
                     <span 
                       className="w-3.5 h-3.5 rounded-full animate-pulse block shadow-[0_0_8px_rgba(255,255,255,0.2)]"
-                      style={{ backgroundColor: getStatusColor(dbLastUpdatedRaw) }}
+                      style={{ backgroundColor: getStatusColor(currentActiveDbLastUpdatedRaw) }}
                     />
                   </button>
                 </>
@@ -2081,19 +2557,43 @@ export default function App() {
                         </span>
                       </button>
 
-                      <button 
+                      <motion.button 
                         id="copyButton"
                         onClick={copyCodeToClipboard}
                         disabled={isRolling}
-                        className="bg-[#E25530] hover:bg-[#E25530]/90 border border-[#E25530] text-white rounded-md transition-all flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-8 w-8 shrink-0"
+                        animate={clipboardFeedback ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+                        transition={{ duration: 0.25 }}
+                        className={`rounded-md transition-all duration-300 flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-8 w-8 shrink-0 ${
+                          clipboardFeedback
+                            ? 'bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                            : 'bg-[#E25530] hover:bg-[#E25530]/90 border border-[#E25530] text-white'
+                        }`}
                         title={clipboardFeedback ? "Copied" : "Copy code"}
                       >
-                        {clipboardFeedback ? (
-                          <Check className="w-4 h-4 text-white font-bold" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-white font-bold" />
-                        )}
-                      </button>
+                        <AnimatePresence mode="wait" initial={false}>
+                          {clipboardFeedback ? (
+                            <motion.div
+                              key="check"
+                              initial={{ scale: 0.5, rotate: -20, opacity: 0 }}
+                              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                              exit={{ scale: 0.5, opacity: 0 }}
+                              transition={{ duration: 0.15 }}
+                            >
+                              <Check className="w-4 h-4 text-white font-bold" />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="copy"
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.8, opacity: 0 }}
+                              transition={{ duration: 0.15 }}
+                            >
+                              <Copy className="w-4 h-4 text-white font-bold" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.button>
 
                       <button
                         id="resetButton"
@@ -2303,6 +2803,7 @@ export default function App() {
                     className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
                   >
                     <option value="1x" className="bg-zinc-950 text-[#FFB451]">{t.settingsScaleDefault}</option>
+                    <option value="1.25x" className="bg-zinc-950 text-[#FFB451]">1.25x</option>
                     <option value="1.5x" className="bg-zinc-950 text-[#FFB451]">1.5x</option>
                     <option value="2x" className="bg-zinc-950 text-[#FFB451]">2x</option>
                     <option value="2.5x" className="bg-zinc-950 text-[#FFB451]">2.5x</option>
@@ -2335,7 +2836,25 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Moved Sync Updates block */}
+              {/* Change Log Button */}
+              <div className="space-y-2 border-t border-[#FF0500]/50 pt-4">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
+                  Change Log
+                </label>
+                <button
+                  id="changeLogButton"
+                  onClick={() => {
+                    setShowChangeLogModal(true);
+                    fetchChangeLog();
+                  }}
+                  className="w-full bg-[#E25530] hover:bg-[#E25530]/90 text-black border border-[#FF0500] font-extrabold uppercase text-xs font-mono py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-md"
+                >
+                  <FileText className="w-4 h-4 text-black font-bold" />
+                  <span>Change Log</span>
+                </button>
+              </div>
+
+              {/* Civ Region DB Sync block */}
               <div className="border-t border-[#FF0500]/50 pt-4 space-y-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-[#FFB451]">
@@ -2344,32 +2863,91 @@ export default function App() {
                       {t.settingsSyncDbTitle}
                     </h4>
                   </div>
-                  <p className="text-[#FFB451] text-[10px] font-mono leading-none pt-1">
-                    {t.settingsSyncDbNote}
-                  </p>
                 </div>
 
-                 <div className="pt-2">
-                  <button
-                    onClick={triggerOnlineSync}
-                    disabled={syncStatus.active}
-                    className="w-full bg-[#E25530] text-black font-extrabold font-mono border border-[#FF0500] uppercase text-xs tracking-wider py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${syncStatus.active ? 'animate-spin text-black' : ''}`} />
-                    <span>{t.syncDataBtn}</span>
-                  </button>
+                {/* Database Source Toggle */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[10px] font-mono font-bold uppercase tracking-wider block text-[#FFB451]/80">
+                    Database Selection
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded-lg border border-[#FF0500]/40">
+                    <button
+                      type="button"
+                      id="dbSourceFandomBtn"
+                      onClick={() => handleSelectDbProvider('fandom')}
+                      className={`py-2 px-3 text-xs font-mono font-bold rounded transition-all cursor-pointer ${
+                        dbProvider === 'fandom'
+                          ? 'bg-[#E25530] text-black shadow'
+                          : 'bg-transparent text-[#FFB451]/70 hover:text-[#FFB451]'
+                      }`}
+                    >
+                      Fandom
+                    </button>
+                    <button
+                      type="button"
+                      id="dbSourceAgtBtn"
+                      onClick={() => handleSelectDbProvider('agt')}
+                      className={`py-2 px-3 text-xs font-mono font-bold rounded transition-all cursor-pointer ${
+                        dbProvider === 'agt'
+                          ? 'bg-[#E25530] text-black shadow'
+                          : 'bg-transparent text-[#FFB451]/70 hover:text-[#FFB451]'
+                      }`}
+                    >
+                      AGT Region Database
+                    </button>
+                  </div>
                 </div>
 
-                {dbLastUpdated && (
+                {/* Refresh controls based on database selection */}
+                {dbProvider === 'fandom' ? (
+                  <div className="pt-2 space-y-2">
+                    <button
+                      id="refreshFandomDbBtn"
+                      onClick={triggerOnlineSync}
+                      disabled={syncStatus.active}
+                      className="w-full bg-[#E25530] text-black font-extrabold font-mono border border-[#FF0500] uppercase text-xs tracking-wider py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${syncStatus.active ? 'animate-spin text-black' : ''}`} />
+                      <span>{t.syncDataBtn}</span>
+                    </button>
+                    <p className="text-center text-[10px] font-mono text-[#FFB451]/60">
+                      {t.settingsSyncDbNote}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="pt-2 space-y-2">
+                    <button
+                      id="refreshAgtDbBtn"
+                      onClick={fetchAgtDatabase}
+                      disabled={agtSyncing}
+                      className="w-full bg-[#E25530] text-black font-extrabold font-mono border border-[#FF0500] uppercase text-xs tracking-wider py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${agtSyncing ? 'animate-spin text-black' : ''}`} />
+                      <span>Refresh AGT DB</span>
+                    </button>
+                    <p className="text-center text-[10px] font-mono text-[#FFB451]/80 font-semibold">
+                      Refresh may take 1-2 mins
+                    </p>
+
+                    {agtSyncStatusText && (
+                      <div className="text-[11px] font-mono text-[#FFB451] bg-zinc-900/60 border border-[#FF0500]/40 p-2 rounded text-center">
+                        {agtSyncStatusText}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Display active DB timestamp */}
+                {currentActiveDbLastUpdated && (
                   <div 
                     className="text-center font-mono text-[10px] mt-2 select-none flex flex-col items-center justify-center leading-normal"
-                    style={{ color: getStatusColor(dbLastUpdatedRaw) }}
+                    style={{ color: getStatusColor(currentActiveDbLastUpdatedRaw) }}
                   >
                     <span className="uppercase font-bold tracking-wider">
-                      Database Last Updated
+                      {dbProvider === 'agt' ? 'AGT DB Last Updated' : 'Fandom DB Last Updated'}
                     </span>
                     <span className="opacity-95 font-semibold">
-                      {dbLastUpdated}
+                      {currentActiveDbLastUpdated}
                     </span>
                   </div>
                 )}
@@ -2418,6 +2996,107 @@ export default function App() {
                 )}
               </div>
 
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Change Log Pop-up Dialog Modal */}
+      <AnimatePresence>
+        {showChangeLogModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-2xl bg-zinc-950 border border-[#FF0500] rounded-xl p-6 shadow-2xl relative flex flex-col max-h-[85vh] text-[#FFB451] space-y-4"
+            >
+              {/* Header section with icon, title, and close button */}
+              <div className="flex items-center justify-between border-b border-[#FF0500] pb-3 text-[#FFB451] shrink-0">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-[#FF0500]" />
+                  <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
+                    App Change Log
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowChangeLogModal(false)}
+                  className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
+                  title="Close"
+                >
+                  <X className="w-4 h-4 text-black font-bold" />
+                </button>
+              </div>
+
+              {/* Scrollable Change Log List */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4 min-h-0 py-2 font-mono">
+                {changeLogLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12 space-y-3 text-zinc-400">
+                    <RefreshCw className="w-6 h-6 animate-spin text-[#E25530]" />
+                    <p className="text-xs font-bold uppercase tracking-wider">Loading Change Log...</p>
+                  </div>
+                ) : changeLogError ? (
+                  <div className="bg-red-950/40 border border-red-800 rounded-lg p-4 space-y-3 text-center">
+                    <p className="text-xs text-red-300 font-bold">{changeLogError}</p>
+                    <button
+                      onClick={fetchChangeLog}
+                      className="px-3 py-1.5 bg-[#E25530] text-black border border-[#FF0500] text-xs font-bold uppercase rounded hover:bg-[#E25530]/90 transition-all cursor-pointer"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : changeLogGroups.length === 0 ? (
+                  <p className="text-zinc-500 text-xs text-center py-8">
+                    No change log entries found.
+                  </p>
+                ) : (
+                  changeLogGroups.map((group, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-zinc-900/60 border border-[#FF0500]/30 rounded-lg p-4 space-y-2.5 relative overflow-hidden"
+                    >
+                      {/* Date Header */}
+                      <div className="flex items-center gap-2 text-[#FFB451] border-b border-zinc-800 pb-2">
+                        <div className="p-1 rounded bg-[#E25530]/20 border border-[#E25530]/40">
+                          <History className="w-3.5 h-3.5 text-[#E25530]" />
+                        </div>
+                        <span className="text-xs font-extrabold uppercase tracking-widest text-[#FFB451]">
+                          {group.date}
+                        </span>
+                      </div>
+
+                      {/* List of changes */}
+                      <ul className="space-y-2 text-xs text-zinc-300 leading-relaxed pl-1">
+                        {group.changes.map((changeItem, itemIdx) => (
+                          <li key={itemIdx} className="flex items-start gap-2">
+                            <span className="text-[#E25530] font-bold select-none mt-0.5">•</span>
+                            <span className="flex-1 text-zinc-200">{changeItem}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-[#FF0500]/50 pt-3 flex items-center justify-between shrink-0">
+                <button
+                  onClick={fetchChangeLog}
+                  disabled={changeLogLoading}
+                  className="flex items-center gap-1.5 text-[10px] font-bold font-mono text-[#FFB451] hover:text-white uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3 h-3 text-[#E25530] ${changeLogLoading ? 'animate-spin' : ''}`} />
+                  <span>Refresh Log</span>
+                </button>
+
+                <button
+                  onClick={() => setShowChangeLogModal(false)}
+                  className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
+                >
+                  CLOSE
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
@@ -2495,14 +3174,141 @@ export default function App() {
                 </button>
               </div>
 
+              {/* Controls Bar: Sort options & Data Export/Import */}
+              <div className="bg-zinc-900/70 border border-zinc-800 rounded-lg p-2.5 space-y-2 shrink-0 text-xs font-mono">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* Sort Group */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px] mr-1">Sort:</span>
+                    
+                    <button
+                      onClick={() => {
+                        setSortBy('default');
+                        setSortOrder('asc');
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                        sortBy === 'default'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                    >
+                      Default
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (sortBy === 'galaxy') {
+                          setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setSortBy('galaxy');
+                          setSortOrder('asc');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                        sortBy === 'galaxy'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                      title="Sort by Galaxy (Secondary sort: Coordinates)"
+                    >
+                      <span>Galaxy</span>
+                      {sortBy === 'galaxy' && (
+                        sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (sortBy === 'civilization') {
+                          setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setSortBy('civilization');
+                          setSortOrder('asc');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                        sortBy === 'civilization'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                      title="Sort by Civilization (Secondary sort: Coordinates)"
+                    >
+                      <span>Civ</span>
+                      {sortBy === 'civilization' && (
+                        sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </button>
+
+                    {/* Explicit direction toggle */}
+                    <button
+                      onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                      className="px-2 py-1 rounded text-[10px] font-bold bg-zinc-950 border border-zinc-800 text-zinc-300 hover:text-white flex items-center gap-1 cursor-pointer"
+                      title={`Toggle Direction (Current: ${sortOrder === 'asc' ? 'Ascending' : 'Descending'})`}
+                    >
+                      <ArrowUpDown className="w-3 h-3 text-[#FFB451]" />
+                      <span className="uppercase text-[9px]">{sortOrder}</span>
+                    </button>
+                  </div>
+
+                  {/* Export / Import Action Group */}
+                  <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={exportFavoritesCSV}
+                      disabled={favorites.length === 0}
+                      className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[#FFB451] hover:text-white text-[10px] font-bold px-2 py-1 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Download CSV file"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#E25530]" />
+                      <span>CSV</span>
+                    </button>
+
+                    <button
+                      onClick={exportFavoritesJSON}
+                      disabled={favorites.length === 0}
+                      className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[#FFB451] hover:text-white text-[10px] font-bold px-2 py-1 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Export JSON file"
+                    >
+                      <FileJson className="w-3.5 h-3.5 text-[#E25530]" />
+                      <span>Export JSON</span>
+                    </button>
+
+                    <button
+                      onClick={() => jsonFileInputRef.current?.click()}
+                      className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-green-400 hover:text-green-300 text-[10px] font-bold px-2 py-1 rounded transition-all cursor-pointer"
+                      title="Import JSON file"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-green-400" />
+                      <span>Import JSON</span>
+                    </button>
+                    <input
+                      type="file"
+                      ref={jsonFileInputRef}
+                      onChange={handleImportJSON}
+                      accept=".json"
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
+                {importStatus && (
+                  <div className={`text-[10px] font-bold px-2 py-1 rounded border ${
+                    importStatus.startsWith('Error') 
+                      ? 'bg-red-950/80 text-red-300 border-red-800' 
+                      : 'bg-green-950/80 text-green-300 border-green-800'
+                  }`}>
+                    {importStatus}
+                  </div>
+                )}
+              </div>
+
               {/* Scrollable Favorites List */}
               <div className="flex-1 overflow-y-auto pr-1 space-y-3 min-h-0 py-2">
-                {favorites.length === 0 ? (
+                {sortedFavorites.length === 0 ? (
                   <p className="text-zinc-500 text-xs font-mono text-center py-8 select-none">
                     {(favoritesTranslations[lang] || favoritesTranslations.en).noFavorites}
                   </p>
                 ) : (
-                  favorites.map((fav) => {
+                  sortedFavorites.map((fav) => {
                     const isEditingThis = editingFavId === fav.id;
                     const favT = favoritesTranslations[lang] || favoritesTranslations.en;
                     return (
@@ -2631,17 +3437,41 @@ export default function App() {
 
                         {/* Action Buttons (Copy, Delete) */}
                         <div className="flex sm:flex-col items-center gap-2 self-end sm:self-center shrink-0" onClick={(e) => e.stopPropagation()}>
-                          <button
+                          <motion.button
                             onClick={(e) => handleCopy(fav.id, fav.sequence, e)}
-                            className="p-1.5 rounded bg-zinc-950/80 border border-zinc-900 text-zinc-400 hover:text-green-400 hover:border-green-500/30 cursor-pointer transition-all relative"
-                            title="Copy"
+                            animate={copiedId === fav.id ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                            transition={{ duration: 0.2 }}
+                            className={`p-1.5 rounded cursor-pointer transition-all duration-300 relative border ${
+                              copiedId === fav.id
+                                ? 'bg-emerald-950/80 border-emerald-500/80 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                                : 'bg-zinc-950/80 border-zinc-900 text-zinc-400 hover:text-green-400 hover:border-green-500/30'
+                            }`}
+                            title={copiedId === fav.id ? "Copied" : "Copy"}
                           >
-                            {copiedId === fav.id ? (
-                              <Check className="w-3.5 h-3.5 text-green-400" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
+                            <AnimatePresence mode="wait" initial={false}>
+                              {copiedId === fav.id ? (
+                                <motion.div
+                                  key="check"
+                                  initial={{ scale: 0.6, rotate: -15, opacity: 0 }}
+                                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                                  exit={{ scale: 0.6, opacity: 0 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key="copy"
+                                  initial={{ scale: 0.8, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  exit={{ scale: 0.8, opacity: 0 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.button>
                           
                           <button
                             onClick={(e) => deleteFavorite(fav.id, e)}
