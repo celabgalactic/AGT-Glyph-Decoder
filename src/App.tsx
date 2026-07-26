@@ -170,6 +170,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
   loadTooltip: string;
   saveTooltip: string;
   savedLabel: string;
+  saveLabel: string;
+  close: string;
+  exportJson: string;
+  importJson: string;
+  sort: string;
+  defaultSort: string;
   galaxy: string;
   civ: string;
   region: string;
@@ -183,6 +189,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "Load sequence",
     saveTooltip: "Save sequence",
     savedLabel: "SAVED",
+    saveLabel: "SAVE",
+    close: "CLOSE",
+    exportJson: "Export JSON",
+    importJson: "Import JSON",
+    sort: "Sort",
+    defaultSort: "Default",
     galaxy: "Galaxy",
     civ: "Civ",
     region: "Region",
@@ -196,6 +208,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "Cargar secuencia",
     saveTooltip: "Guardar secuencia",
     savedLabel: "GUARDADO",
+    saveLabel: "GUARDAR",
+    close: "CERRAR",
+    exportJson: "Exportar JSON",
+    importJson: "Importar JSON",
+    sort: "Ordenar",
+    defaultSort: "Predeterminado",
     galaxy: "Galaxia",
     civ: "Civ",
     region: "Región",
@@ -209,6 +227,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "Charger la séquence",
     saveTooltip: "Enregistrer la séquence",
     savedLabel: "ENREGISTRÉ",
+    saveLabel: "SAUVEGARDER",
+    close: "FERMER",
+    exportJson: "Exporter JSON",
+    importJson: "Importer JSON",
+    sort: "Trier",
+    defaultSort: "Par défaut",
     galaxy: "Galaxie",
     civ: "Civ",
     region: "Région",
@@ -222,6 +246,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "Sequenz laden",
     saveTooltip: "Sequenz speichern",
     savedLabel: "GESPEICHERT",
+    saveLabel: "SPEICHERN",
+    close: "SCHLIESSEN",
+    exportJson: "JSON exportieren",
+    importJson: "JSON importieren",
+    sort: "Sortierung",
+    defaultSort: "Standard",
     galaxy: "Galaxie",
     civ: "Ziv",
     region: "Region",
@@ -235,6 +265,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "Carregar sequência",
     saveTooltip: "Salvar sequência",
     savedLabel: "SALVO",
+    saveLabel: "SALVAR",
+    close: "FECHAR",
+    exportJson: "Exportar JSON",
+    importJson: "Importar JSON",
+    sort: "Ordenar",
+    defaultSort: "Padrão",
     galaxy: "Galáxia",
     civ: "Civ",
     region: "Região",
@@ -248,6 +284,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "シーケンスを読み込む",
     saveTooltip: "シーケンスを保存",
     savedLabel: "保存済み",
+    saveLabel: "保存",
+    close: "閉じる",
+    exportJson: "JSONを出力",
+    importJson: "JSONを取り込み",
+    sort: "並べ替え",
+    defaultSort: "デフォルト",
     galaxy: "銀河",
     civ: "文明",
     region: "領域",
@@ -261,6 +303,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "加载序列",
     saveTooltip: "保存序列",
     savedLabel: "已保存",
+    saveLabel: "保存",
+    close: "关闭",
+    exportJson: "导出 JSON",
+    importJson: "导入 JSON",
+    sort: "排序",
+    defaultSort: "默认",
     galaxy: "星系",
     civ: "文明",
     region: "区域",
@@ -274,6 +322,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "Carica sequenza",
     saveTooltip: "Salva sequenza",
     savedLabel: "SALVATO",
+    saveLabel: "SALVA",
+    close: "CHIUDI",
+    exportJson: "Esporta JSON",
+    importJson: "Importa JSON",
+    sort: "Ordina",
+    defaultSort: "Predefinito",
     galaxy: "Galassia",
     civ: "Civ",
     region: "Regione",
@@ -287,6 +341,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "โหลดลำดับ",
     saveTooltip: "บันทึกลำดับ",
     savedLabel: "บันทึกแล้ว",
+    saveLabel: "บันทึก",
+    close: "ปิด",
+    exportJson: "ส่งออก JSON",
+    importJson: "นำเข้า JSON",
+    sort: "เรียงลำดับ",
+    defaultSort: "เริ่มต้น",
     galaxy: "กาแล็กซี",
     civ: "อารยธรรม",
     region: "ภูมิภาค",
@@ -300,6 +360,12 @@ const favoritesTranslations: Record<SupportedLanguage, {
     loadTooltip: "अनुक्रम लोड करें",
     saveTooltip: "अनुक्रम सहेजें",
     savedLabel: "सहेजा गया",
+    saveLabel: "सहेजें",
+    close: "बंद करें",
+    exportJson: "JSON निर्यात करें",
+    importJson: "JSON आयात करें",
+    sort: "क्रमानुसार",
+    defaultSort: "डिफ़ॉल्ट",
     galaxy: "आकाशगंगा",
     civ: "सभ्यता",
     region: "क्षेत्र",
@@ -1857,7 +1923,7 @@ export default function App() {
               <div className="flex flex-col">
                 <span className="text-sm md:text-base font-extrabold tracking-wider text-[#FFB451] uppercase">
                   <span className="block md:hidden">AGT</span>
-                  <span className="hidden md:block">Alliance of Galactic Travellers</span>
+                  <span className="hidden md:block">{t.allianceOfGalacticTravellers}</span>
                 </span>
                 <span className="text-xs text-[#FFB451] opacity-90 font-semibold uppercase tracking-wider font-mono">
                   <span className="block md:hidden">Glyph Tool</span>
@@ -1878,7 +1944,7 @@ export default function App() {
                     style={{ color: getStatusColor(currentActiveDbLastUpdatedRaw) }}
                   >
                     <span className="uppercase text-[8px] tracking-wider font-bold leading-tight">
-                      {dbProvider === 'agt' ? 'AGT DB Last Updated' : 'Fandom DB Last Updated'}
+                      {dbProvider === 'agt' ? t.agtDbLastUpdated : t.fandomDbLastUpdated}
                     </span>
                     <span className="opacity-90 font-medium whitespace-nowrap">
                       {currentActiveDbLastUpdated}
@@ -1890,7 +1956,7 @@ export default function App() {
                     id="db-last-updated-mobile-dot"
                     onClick={() => setShowSettings(true)}
                     className="flex md:hidden p-2 -m-2 cursor-pointer items-center justify-center shrink-0"
-                    title={`${dbProvider === 'agt' ? 'AGT DB' : 'Fandom DB'} Status (Click to open settings)`}
+                    title={`${dbProvider === 'agt' ? t.agtDbLastUpdated : t.fandomDbLastUpdated} (${t.settingsTitle})`}
                     aria-label="Database Status"
                   >
                     <span 
@@ -2839,7 +2905,7 @@ export default function App() {
               {/* Change Log Button */}
               <div className="space-y-2 border-t border-[#FF0500]/50 pt-4">
                 <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  Change Log
+                  {t.changeLog}
                 </label>
                 <button
                   id="changeLogButton"
@@ -2850,7 +2916,7 @@ export default function App() {
                   className="w-full bg-[#E25530] hover:bg-[#E25530]/90 text-black border border-[#FF0500] font-extrabold uppercase text-xs font-mono py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-md"
                 >
                   <FileText className="w-4 h-4 text-black font-bold" />
-                  <span>Change Log</span>
+                  <span>{t.changeLog}</span>
                 </button>
               </div>
 
@@ -2868,7 +2934,7 @@ export default function App() {
                 {/* Database Source Toggle */}
                 <div className="space-y-1.5 pt-1">
                   <label className="text-[10px] font-mono font-bold uppercase tracking-wider block text-[#FFB451]/80">
-                    Database Selection
+                    {t.dbSelectionLabel}
                   </label>
                   <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded-lg border border-[#FF0500]/40">
                     <button
@@ -2881,7 +2947,7 @@ export default function App() {
                           : 'bg-transparent text-[#FFB451]/70 hover:text-[#FFB451]'
                       }`}
                     >
-                      Fandom
+                      {t.fandom}
                     </button>
                     <button
                       type="button"
@@ -2893,7 +2959,7 @@ export default function App() {
                           : 'bg-transparent text-[#FFB451]/70 hover:text-[#FFB451]'
                       }`}
                     >
-                      AGT Region Database
+                      {t.agtRegionDb}
                     </button>
                   </div>
                 </div>
@@ -2923,10 +2989,10 @@ export default function App() {
                       className="w-full bg-[#E25530] text-black font-extrabold font-mono border border-[#FF0500] uppercase text-xs tracking-wider py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${agtSyncing ? 'animate-spin text-black' : ''}`} />
-                      <span>Refresh AGT DB</span>
+                      <span>{t.refreshAgtDbBtn}</span>
                     </button>
                     <p className="text-center text-[10px] font-mono text-[#FFB451]/80 font-semibold">
-                      Refresh may take 1-2 mins
+                      {t.refreshAgtDbNote}
                     </p>
 
                     {agtSyncStatusText && (
@@ -2944,7 +3010,7 @@ export default function App() {
                     style={{ color: getStatusColor(currentActiveDbLastUpdatedRaw) }}
                   >
                     <span className="uppercase font-bold tracking-wider">
-                      {dbProvider === 'agt' ? 'AGT DB Last Updated' : 'Fandom DB Last Updated'}
+                      {dbProvider === 'agt' ? t.agtDbLastUpdated : t.fandomDbLastUpdated}
                     </span>
                     <span className="opacity-95 font-semibold">
                       {currentActiveDbLastUpdated}
@@ -3016,13 +3082,13 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-[#FF0500]" />
                   <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
-                    App Change Log
+                    {t.appChangeLogTitle}
                   </span>
                 </div>
                 <button
                   onClick={() => setShowChangeLogModal(false)}
                   className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
-                  title="Close"
+                  title={t.close}
                 >
                   <X className="w-4 h-4 text-black font-bold" />
                 </button>
@@ -3033,7 +3099,7 @@ export default function App() {
                 {changeLogLoading ? (
                   <div className="flex flex-col items-center justify-center py-12 space-y-3 text-zinc-400">
                     <RefreshCw className="w-6 h-6 animate-spin text-[#E25530]" />
-                    <p className="text-xs font-bold uppercase tracking-wider">Loading Change Log...</p>
+                    <p className="text-xs font-bold uppercase tracking-wider">{t.loadingChangeLog}</p>
                   </div>
                 ) : changeLogError ? (
                   <div className="bg-red-950/40 border border-red-800 rounded-lg p-4 space-y-3 text-center">
@@ -3042,12 +3108,12 @@ export default function App() {
                       onClick={fetchChangeLog}
                       className="px-3 py-1.5 bg-[#E25530] text-black border border-[#FF0500] text-xs font-bold uppercase rounded hover:bg-[#E25530]/90 transition-all cursor-pointer"
                     >
-                      Retry
+                      {t.retry}
                     </button>
                   </div>
                 ) : changeLogGroups.length === 0 ? (
                   <p className="text-zinc-500 text-xs text-center py-8">
-                    No change log entries found.
+                    {t.noChangeLogEntries}
                   </p>
                 ) : (
                   changeLogGroups.map((group, index) => (
@@ -3087,14 +3153,14 @@ export default function App() {
                   className="flex items-center gap-1.5 text-[10px] font-bold font-mono text-[#FFB451] hover:text-white uppercase tracking-wider cursor-pointer disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3 h-3 text-[#E25530] ${changeLogLoading ? 'animate-spin' : ''}`} />
-                  <span>Refresh Log</span>
+                  <span>{t.refreshLog}</span>
                 </button>
 
                 <button
                   onClick={() => setShowChangeLogModal(false)}
                   className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
                 >
-                  CLOSE
+                  {t.close}
                 </button>
               </div>
             </motion.div>
@@ -3168,7 +3234,7 @@ export default function App() {
                     setShowFavoritesModal(false);
                   }}
                   className="p-1.5 rounded hover:bg-zinc-900 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                  title="Close"
+                  title={(favoritesTranslations[lang] || favoritesTranslations.en).close || "Close"}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -3179,7 +3245,9 @@ export default function App() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   {/* Sort Group */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px] mr-1">Sort:</span>
+                    <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px] mr-1">
+                      {(favoritesTranslations[lang] || favoritesTranslations.en).sort}:
+                    </span>
                     
                     <button
                       onClick={() => {
@@ -3192,7 +3260,7 @@ export default function App() {
                           : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
                       }`}
                     >
-                      Default
+                      {(favoritesTranslations[lang] || favoritesTranslations.en).defaultSort}
                     </button>
 
                     <button
@@ -3211,7 +3279,7 @@ export default function App() {
                       }`}
                       title="Sort by Galaxy (Secondary sort: Coordinates)"
                     >
-                      <span>Galaxy</span>
+                      <span>{(favoritesTranslations[lang] || favoritesTranslations.en).galaxy}</span>
                       {sortBy === 'galaxy' && (
                         sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
                       )}
@@ -3233,7 +3301,7 @@ export default function App() {
                       }`}
                       title="Sort by Civilization (Secondary sort: Coordinates)"
                     >
-                      <span>Civ</span>
+                      <span>{(favoritesTranslations[lang] || favoritesTranslations.en).civ}</span>
                       {sortBy === 'civilization' && (
                         sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
                       )}
@@ -3269,7 +3337,7 @@ export default function App() {
                       title="Export JSON file"
                     >
                       <FileJson className="w-3.5 h-3.5 text-[#E25530]" />
-                      <span>Export JSON</span>
+                      <span>{(favoritesTranslations[lang] || favoritesTranslations.en).exportJson}</span>
                     </button>
 
                     <button
@@ -3278,7 +3346,7 @@ export default function App() {
                       title="Import JSON file"
                     >
                       <Upload className="w-3.5 h-3.5 text-green-400" />
-                      <span>Import JSON</span>
+                      <span>{(favoritesTranslations[lang] || favoritesTranslations.en).importJson}</span>
                     </button>
                     <input
                       type="file"
@@ -3506,7 +3574,7 @@ export default function App() {
                   }}
                   className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
                 >
-                  {lang === 'es' ? 'CERRAR' : lang === 'fr' ? 'FERMER' : lang === 'de' ? 'SCHLIESSEN' : lang === 'pt' ? 'FECHAR' : 'CLOSE'}
+                  {(favoritesTranslations[lang] || favoritesTranslations.en).close}
                 </button>
               </div>
             </motion.div>

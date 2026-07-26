@@ -79,6 +79,21 @@ export interface TranslationSet {
   settingsSyncDbNote: string;
   toggleFullscreen: string;
   exitFullscreen: string;
+  allianceOfGalacticTravellers: string;
+  agtDbLastUpdated: string;
+  fandomDbLastUpdated: string;
+  changeLog: string;
+  appChangeLogTitle: string;
+  refreshLog: string;
+  dbSelectionLabel: string;
+  fandom: string;
+  agtRegionDb: string;
+  refreshAgtDbBtn: string;
+  refreshAgtDbNote: string;
+  close: string;
+  loadingChangeLog: string;
+  noChangeLogEntries: string;
+  retry: string;
 }
 
 export const translations: Record<SupportedLanguage, TranslationSet> = {
@@ -154,7 +169,22 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsSyncDbTitle: "Civ Region DB Sync",
     settingsSyncDbNote: "* Sync refresh may take up to 10 minutes to complete",
     toggleFullscreen: "Toggle Fullscreen",
-    exitFullscreen: "Exit Fullscreen"
+    exitFullscreen: "Exit Fullscreen",
+    allianceOfGalacticTravellers: "Alliance of Galactic Travellers",
+    agtDbLastUpdated: "AGT DB Last Updated",
+    fandomDbLastUpdated: "Fandom DB Last Updated",
+    changeLog: "Change Log",
+    appChangeLogTitle: "App Change Log",
+    refreshLog: "Refresh Log",
+    dbSelectionLabel: "Database Selection",
+    fandom: "Fandom",
+    agtRegionDb: "AGT Region Database",
+    refreshAgtDbBtn: "Refresh AGT DB",
+    refreshAgtDbNote: "Refresh may take 1-2 mins",
+    close: "Close",
+    loadingChangeLog: "Loading Change Log...",
+    noChangeLogEntries: "No change log entries found.",
+    retry: "Retry"
   },
   es: {
     title: "Generador de Glifos NMS",
@@ -223,12 +253,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "Himno AGT",
     settingsMuteBtn: "Silenciar",
     settingsUnmuteBtn: "Activar sonido",
-    settingsTextScaleLabel: "Escala de texto de escritorio",
+    settingsTextScaleLabel: "Escala de fuente",
     settingsScaleDefault: "1x (Predeterminado)",
     settingsSyncDbTitle: "Sincronización de Región, Civ y Coordenadas",
     settingsSyncDbNote: "* La sincronización puede tardar hasta 10 minutos",
     toggleFullscreen: "Pantalla completa",
-    exitFullscreen: "Salir de pantalla completa"
+    exitFullscreen: "Salir de pantalla completa",
+    allianceOfGalacticTravellers: "Alianza de Viajeros Galácticos",
+    agtDbLastUpdated: "Última actualización BD AGT",
+    fandomDbLastUpdated: "Última actualización BD Fandom",
+    changeLog: "Registro de cambios",
+    appChangeLogTitle: "Registro de cambios de la aplicación",
+    refreshLog: "Actualizar registro",
+    dbSelectionLabel: "Selección de base de datos",
+    agtRegionDb: "Base de datos de regiones AGT",
+    refreshAgtDbBtn: "Actualizar BD AGT",
+    refreshAgtDbNote: "La actualización puede tardar 1-2 min",
+    close: "Cerrar",
+    loadingChangeLog: "Cargando registro de cambios...",
+    noChangeLogEntries: "No se encontraron entradas en el registro.",
+    retry: "Reintentar"
   },
   fr: {
     title: "Générateur de glyphes NMS",
@@ -297,12 +341,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "Hymne AGT",
     settingsMuteBtn: "Couper",
     settingsUnmuteBtn: "Activer le son",
-    settingsTextScaleLabel: "Échelle de texte de bureau",
+    settingsTextScaleLabel: "Échelle de police",
     settingsScaleDefault: "1x (Par défaut)",
     settingsSyncDbTitle: "Synchro BD Région, Civ et Coordonnées",
     settingsSyncDbNote: "* La synchronisation peut prendre jusqu'à 10 minutes",
     toggleFullscreen: "Plein écran",
-    exitFullscreen: "Quitter le plein écran"
+    exitFullscreen: "Quitter le plein écran",
+    allianceOfGalacticTravellers: "Alliance des Voyageurs Galactiques",
+    agtDbLastUpdated: "Dernière màj BD AGT",
+    fandomDbLastUpdated: "Dernière màj BD Fandom",
+    changeLog: "Journal des modifications",
+    appChangeLogTitle: "Journal des modifications de l'application",
+    refreshLog: "Actualiser le journal",
+    dbSelectionLabel: "Sélection de la base de données",
+    agtRegionDb: "Base de données de régions AGT",
+    refreshAgtDbBtn: "Actualiser la BD AGT",
+    refreshAgtDbNote: "L'actualisation peut prendre 1-2 min",
+    close: "Fermer",
+    loadingChangeLog: "Chargement du journal des modifications...",
+    noChangeLogEntries: "Aucune entrée trouvée dans le journal.",
+    retry: "Réessayer"
   },
   de: {
     title: "NMS Glyphen-Generator",
@@ -371,12 +429,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "AGT-Hymne",
     settingsMuteBtn: "Stummschalten",
     settingsUnmuteBtn: "Ton einschalten",
-    settingsTextScaleLabel: "Desktop-Textgröße",
+    settingsTextScaleLabel: "Schriftgröße",
     settingsScaleDefault: "1x (Standard)",
     settingsSyncDbTitle: "Regionen-, Zivilisations- u. Koordinaten-Datenbanksync",
     settingsSyncDbNote: "* Die Synchronisierung kann bis zu 10 Minuten dauern",
     toggleFullscreen: "Vollbildmodus",
-    exitFullscreen: "Vollbildmodus beenden"
+    exitFullscreen: "Vollbildmodus beenden",
+    allianceOfGalacticTravellers: "Allianz Galaktischer Reisender",
+    agtDbLastUpdated: "AGT DB Zuletzt aktualisiert",
+    fandomDbLastUpdated: "Fandom DB Zuletzt aktualisiert",
+    changeLog: "Änderungsprotokoll",
+    appChangeLogTitle: "App-Änderungsprotokoll",
+    refreshLog: "Protokoll aktualisieren",
+    dbSelectionLabel: "Datenbankauswahl",
+    agtRegionDb: "AGT-Regionendatenbank",
+    refreshAgtDbBtn: "AGT DB aktualisieren",
+    refreshAgtDbNote: "Aktualisierung kann 1-2 Min. dauern",
+    close: "Schließen",
+    loadingChangeLog: "Änderungsprotokoll wird geladen...",
+    noChangeLogEntries: "Keine Änderungsprotokolleinträge gefunden.",
+    retry: "Wiederholen"
   },
   pt: {
     title: "Gerador de Glifos NMS",
@@ -445,12 +517,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "Hino AGT",
     settingsMuteBtn: "Silenciar",
     settingsUnmuteBtn: "Ativar som",
-    settingsTextScaleLabel: "Escala de texto para desktop",
+    settingsTextScaleLabel: "Escala da fonte",
     settingsScaleDefault: "1x (Predefinido)",
     settingsSyncDbTitle: "Sincronização de Banco de Dados de Regiões, Civs e Coordenadas",
     settingsSyncDbNote: "* A sincronização pode levar até 10 minutos",
     toggleFullscreen: "Tela cheia",
-    exitFullscreen: "Sair da tela cheia"
+    exitFullscreen: "Sair da tela cheia",
+    allianceOfGalacticTravellers: "Aliança de Viajantes Galácticos",
+    agtDbLastUpdated: "Última atualização BD AGT",
+    fandomDbLastUpdated: "Última atualização BD Fandom",
+    changeLog: "Registro de alterações",
+    appChangeLogTitle: "Registro de alterações do aplicativo",
+    refreshLog: "Atualizar registro",
+    dbSelectionLabel: "Seleção do banco de dados",
+    agtRegionDb: "Banco de dados de regiões AGT",
+    refreshAgtDbBtn: "Atualizar BD AGT",
+    refreshAgtDbNote: "A atualização pode levar de 1 a 2 min",
+    close: "Fechar",
+    loadingChangeLog: "Carregando registro de alterações...",
+    noChangeLogEntries: "Nenhuma entrada de registro encontrada.",
+    retry: "Tentar novamente"
   },
   it: {
     title: "Generatore di Glifi NMS",
@@ -518,12 +604,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "Inno AGT",
     settingsMuteBtn: "Silenzia",
     settingsUnmuteBtn: "Riattiva audio",
-    settingsTextScaleLabel: "Scala del testo desktop",
+    settingsTextScaleLabel: "Scala del carattere",
     settingsScaleDefault: "1x (Predefinito)",
     settingsSyncDbTitle: "Sincronizzazione DB Regioni, Civiltà e Coordinate",
     settingsSyncDbNote: "* L'aggiornamento della sincronizzazione può richiedere fino a 10 minuti",
     toggleFullscreen: "Schermo intero",
-    exitFullscreen: "Esci da schermo intero"
+    exitFullscreen: "Esci da schermo intero",
+    allianceOfGalacticTravellers: "Alleanza dei Viaggiatori Galattici",
+    agtDbLastUpdated: "Ultimo aggiornamento DB AGT",
+    fandomDbLastUpdated: "Ultimo aggiornamento DB Fandom",
+    changeLog: "Registro modifiche",
+    appChangeLogTitle: "Registro modifiche dell'app",
+    refreshLog: "Aggiorna registro",
+    dbSelectionLabel: "Selezione del database",
+    agtRegionDb: "Database regioni AGT",
+    refreshAgtDbBtn: "Aggiorna DB AGT",
+    refreshAgtDbNote: "L'aggiornamento può richiedere 1-2 min",
+    close: "Chiudi",
+    loadingChangeLog: "Caricamento registro modifiche...",
+    noChangeLogEntries: "Nessun elemento trovato nel registro.",
+    retry: "Riprova"
   },
   th: {
     title: "เครื่องมือสร้างสัญลักษณ์ NMS",
@@ -591,12 +691,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "เพลงธีม AGT",
     settingsMuteBtn: "ปิดเสียง",
     settingsUnmuteBtn: "เปิดเสียง",
-    settingsTextScaleLabel: "ขนาดข้อความเดสก์ท็อป",
+    settingsTextScaleLabel: "ขนาดฟอนต์",
     settingsScaleDefault: "1 เท่า (เริ่มต้น)",
     settingsSyncDbTitle: "การซิงค์ฐานข้อมูลภูมิภาค อารยธรรม และพิกัด",
     settingsSyncDbNote: "* การซิงโครไนซ์อาจใช้เวลาถึง 10 นาที",
     toggleFullscreen: "เปิดโหมดเต็มจอ",
-    exitFullscreen: "ปิดโหมดเต็มจอ"
+    exitFullscreen: "ปิดโหมดเต็มจอ",
+    allianceOfGalacticTravellers: "พันธมิตรผู้ท่องกาแล็กซี",
+    agtDbLastUpdated: "อัปเดต DB AGT ล่าสุด",
+    fandomDbLastUpdated: "อัปเดต DB Fandom ล่าสุด",
+    changeLog: "บันทึกการเปลี่ยนแปลง",
+    appChangeLogTitle: "บันทึกการเปลี่ยนแปลงแอป",
+    refreshLog: "รีเฟรชบันทึก",
+    dbSelectionLabel: "การเลือกฐานข้อมูล",
+    agtRegionDb: "ฐานข้อมูลภูมิภาค AGT",
+    refreshAgtDbBtn: "รีเฟรช DB AGT",
+    refreshAgtDbNote: "การรีเฟรชอาจใช้เวลา 1-2 นาที",
+    close: "ปิด",
+    loadingChangeLog: "กำลังโหลดบันทึกการเปลี่ยนแปลง...",
+    noChangeLogEntries: "ไม่พบบันทึกการเปลี่ยนแปลง",
+    retry: "ลองใหม่"
   },
   hi: {
     title: "NMS ग्लिफ जेनरेटर",
@@ -664,12 +778,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "AGT एंथम",
     settingsMuteBtn: "म्यूट",
     settingsUnmuteBtn: "अनम्यूट",
-    settingsTextScaleLabel: "डेस्कटॉप टेक्स्ट स्केल",
+    settingsTextScaleLabel: "फ़ॉन्ट स्केल",
     settingsScaleDefault: "1x (डिफ़ॉल्ट)",
     settingsSyncDbTitle: "क्षेत्र, सभ्यता और निर्देशांक डेटाबेस सिंक",
     settingsSyncDbNote: "* सिंक रीफ़्रेश को पूरा होने में 10 मिनट तक का समय लग सकता है",
     toggleFullscreen: "फ़ुलस्क्रीन टॉगल करें",
-    exitFullscreen: "फ़ुलस्क्रीन से बाहर निकलें"
+    exitFullscreen: "फ़ुलस्क्रीन से बाहर निकलें",
+    allianceOfGalacticTravellers: "गैलेक्टिक यात्रियों का गठबंधन",
+    agtDbLastUpdated: "AGT DB अंतिम बार अद्यतन",
+    fandomDbLastUpdated: "Fandom DB अंतिम बार अद्यतन",
+    changeLog: "परिवर्तन लॉग",
+    appChangeLogTitle: "ऐप परिवर्तन लॉग",
+    refreshLog: "लॉग ताज़ा करें",
+    dbSelectionLabel: "डेटाबेस चयन",
+    agtRegionDb: "AGT क्षेत्र डेटाबेस",
+    refreshAgtDbBtn: "AGT DB ताज़ा करें",
+    refreshAgtDbNote: "ताज़ा करने में 1-2 मिनट लग सकते हैं",
+    close: "बंद करें",
+    loadingChangeLog: "परिवर्तन लॉग लोड हो रहा है...",
+    noChangeLogEntries: "कोई परिवर्तन लॉग प्रविष्टि नहीं मिली।",
+    retry: "पुनः प्रयास करें"
   },
   zh: {
     title: "NMS 符文生成器",
@@ -737,12 +865,26 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsAgtAnthemLabel: "AGT 颂歌",
     settingsMuteBtn: "静音",
     settingsUnmuteBtn: "取消静音",
-    settingsTextScaleLabel: "桌面文字大小",
+    settingsTextScaleLabel: "字体缩放",
     settingsScaleDefault: "1x (默认)",
     settingsSyncDbTitle: "区域、文明及坐标数据库同步",
     settingsSyncDbNote: "* 同步更新最多可能需要 10 分钟才能完成",
     toggleFullscreen: "切换全屏",
-    exitFullscreen: "退出全屏"
+    exitFullscreen: "退出全屏",
+    allianceOfGalacticTravellers: "星系旅行者联盟",
+    agtDbLastUpdated: "AGT 数据库最后更新",
+    fandomDbLastUpdated: "Fandom 数据库最后更新",
+    changeLog: "更新日志",
+    appChangeLogTitle: "应用更新日志",
+    refreshLog: "刷新日志",
+    dbSelectionLabel: "数据库选择",
+    agtRegionDb: "AGT 区域数据库",
+    refreshAgtDbBtn: "刷新 AGT 数据库",
+    refreshAgtDbNote: "刷新可能需要 1-2 分钟",
+    close: "关闭",
+    loadingChangeLog: "正在加载更新日志...",
+    noChangeLogEntries: "未找到更新日志条目。",
+    retry: "重试"
   },
   ja: {
     title: "NMS ポータルグリフ生成器",
@@ -815,7 +957,22 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     settingsSyncDbTitle: "領域・文明・座標 のDB同期",
     settingsSyncDbNote: "* 同期完了まで最大10分程度かかる場合があります",
     toggleFullscreen: "フルスクリーン切り替え",
-    exitFullscreen: "フルスクリーンを終了"
+    exitFullscreen: "フルスクリーンを終了",
+    allianceOfGalacticTravellers: "銀河旅人同盟 (AGT)",
+    agtDbLastUpdated: "AGT DB 最終更新",
+    fandomDbLastUpdated: "Fandom DB 最終更新",
+    changeLog: "変更履歴",
+    appChangeLogTitle: "アプリ変更履歴",
+    refreshLog: "履歴を更新",
+    dbSelectionLabel: "データベース選択",
+    fandom: "Fandom",
+    agtRegionDb: "AGT 領域データベース",
+    refreshAgtDbBtn: "AGT DB を更新",
+    refreshAgtDbNote: "更新には 1〜2 分かかる場合があります",
+    close: "閉じる",
+    loadingChangeLog: "変更履歴を読み込み中...",
+    noChangeLogEntries: "変更履歴が見つかりません。",
+    retry: "再試行"
   }
 };
 
