@@ -119,7 +119,7 @@ export function validateGlyphInput(glyphString: string): string {
   return formatted.slice(0, 12);
 }
 
-export function coords2Glyphs(coordinates: string): string {
+export function coords2Glyphs(coordinates: string, planet: number = 1): string {
   if (!coordinates || typeof coordinates !== 'string') return '';
   const parts = coordinates.trim().split(':');
   if (parts.length === 3) {
@@ -147,7 +147,11 @@ export function coords2Glyphs(coordinates: string): string {
 
   const cleanS = sStr ? sStr.toUpperCase().replace(/[^0-9A-F]/g, '') : '';
   const system_hex = cleanS ? cleanS.padStart(4, '0') : '0000';
-  return system_hex + yGlyphHex + zGlyphHex + xGlyphHex;
+  const planetVal = (typeof planet === 'number' && !isNaN(planet) && planet >= 1 && planet <= 6) ? planet : 1;
+  const planetHex = planetVal.toString(16).toUpperCase();
+  const planet_system_hex = planetHex + system_hex.slice(1);
+
+  return planet_system_hex + yGlyphHex + zGlyphHex + xGlyphHex;
 }
 
 export function glyphs2Coords(glyphs: string): string {

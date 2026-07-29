@@ -389,6 +389,13 @@ const claimTranslations: Record<SupportedLanguage, {
   statusTitle: string;
   statusUnclaimedMessage: string;
   statusClaimedMessage: (civ: string) => string;
+  byName: string;
+  byCoordsGlyphs: string;
+  selectGalaxy: string;
+  coordsOrGlyphsLabel: string;
+  coordsOrGlyphsPlaceholder: string;
+  undocumentedTitle: string;
+  undocumentedMessage: string;
 }> = {
   en: {
     title: "Check Region Claim",
@@ -405,7 +412,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "Region is not in the database and is likely unclaimed.",
     statusTitle: "Claim Status",
     statusUnclaimedMessage: "This region is recorded as currently unclaimed",
-    statusClaimedMessage: (civ) => `This region is claimed by ${civ}`
+    statusClaimedMessage: (civ) => `This region is claimed by ${civ}`,
+    byName: "By Region Name",
+    byCoordsGlyphs: "By Coords / Glyphs",
+    selectGalaxy: "Select Galaxy",
+    coordsOrGlyphsLabel: "Coordinates or Glyph Sequence",
+    coordsOrGlyphsPlaceholder: "e.g. 043D:0072:0D44:005F or 105FD47243D",
+    undocumentedTitle: "Undocumented Region",
+    undocumentedMessage: "This region is currently undocumented."
   },
   es: {
     title: "Cotejar Reclamación",
@@ -422,7 +436,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "La región no está en la base de datos y es probable que no esté reclamada.",
     statusTitle: "Estado de Reclamación",
     statusUnclaimedMessage: "Esta región está registrada como actualmente no reclamada",
-    statusClaimedMessage: (civ) => `Esta región está reclamada por ${civ}`
+    statusClaimedMessage: (civ) => `Esta región está reclamada por ${civ}`,
+    byName: "Por Nombre de Región",
+    byCoordsGlyphs: "Por Coord. / Glifos",
+    selectGalaxy: "Seleccionar Galaxia",
+    coordsOrGlyphsLabel: "Coordenadas o Secuencia de Glifos",
+    coordsOrGlyphsPlaceholder: "ej. 043D:0072:0D44:005F o 105FD47243D",
+    undocumentedTitle: "Región no indocumentada",
+    undocumentedMessage: "This region is currently undocumented."
   },
   fr: {
     title: "Vérifier la Revendication",
@@ -439,7 +460,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "La région n'est pas dans la base de données et est probablement non revendiquée.",
     statusTitle: "Statut de Revendication",
     statusUnclaimedMessage: "Cette région est enregistrée comme actuellement non revendiquée",
-    statusClaimedMessage: (civ) => `Cette région est revendiquée par ${civ}`
+    statusClaimedMessage: (civ) => `Cette région est revendiquée par ${civ}`,
+    byName: "Par Nom de Région",
+    byCoordsGlyphs: "Par Coordonnées / Glyphes",
+    selectGalaxy: "Sélectionner la Galaxie",
+    coordsOrGlyphsLabel: "Coordonnées ou Séquence de Glyphes",
+    coordsOrGlyphsPlaceholder: "ex. 043D:0072:0D44:005F ou 105FD47243D",
+    undocumentedTitle: "Région non documentée",
+    undocumentedMessage: "This region is currently undocumented."
   },
   de: {
     title: "Anspruch prüfen",
@@ -456,7 +484,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "Region ist nicht in der Datenbank und wahrscheinlich unbeansprucht.",
     statusTitle: "Anspruchsstatus",
     statusUnclaimedMessage: "Diese Region ist derzeit als unbeansprucht registriert",
-    statusClaimedMessage: (civ) => `Diese Region wird von ${civ} beansprucht`
+    statusClaimedMessage: (civ) => `Diese Region wird von ${civ} beansprucht`,
+    byName: "Nach Regionsnamen",
+    byCoordsGlyphs: "Nach Koord. / Glyphen",
+    selectGalaxy: "Galaxie auswählen",
+    coordsOrGlyphsLabel: "Koordinaten oder Glyphensequenz",
+    coordsOrGlyphsPlaceholder: "z.B. 043D:0072:0D44:005F oder 105FD47243D",
+    undocumentedTitle: "Undokumentierte Region",
+    undocumentedMessage: "This region is currently undocumented."
   },
   pt: {
     title: "Verificar Reivindicação",
@@ -473,7 +508,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "A região não está no banco de dados e provavelmente não está reivindicada.",
     statusTitle: "Status da Reivindicação",
     statusUnclaimedMessage: "Esta região está registrada como atualmente não reivindicada",
-    statusClaimedMessage: (civ) => `Esta região é reivindicada por ${civ}`
+    statusClaimedMessage: (civ) => `Esta região é reivindicada por ${civ}`,
+    byName: "Por Nome da Região",
+    byCoordsGlyphs: "Por Coord. / Glifos",
+    selectGalaxy: "Selecionar Galáxia",
+    coordsOrGlyphsLabel: "Coordenadas ou Sequência de Glifos",
+    coordsOrGlyphsPlaceholder: "ex. 043D:0072:0D44:005F ou 105FD47243D",
+    undocumentedTitle: "Região não documentada",
+    undocumentedMessage: "This region is currently undocumented."
   },
   it: {
     title: "Verifica Rivendicazione",
@@ -490,7 +532,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "La regione non è nel database ed è probabilmente non rivendicata.",
     statusTitle: "Stato della Rivendicazione",
     statusUnclaimedMessage: "Questa regione risulta attualmente non rivendicata",
-    statusClaimedMessage: (civ) => `Questa regione è rivendicata da ${civ}`
+    statusClaimedMessage: (civ) => `Questa regione è rivendicata da ${civ}`,
+    byName: "Per Nome Regione",
+    byCoordsGlyphs: "Per Coord. / Glifi",
+    selectGalaxy: "Seleziona Galassia",
+    coordsOrGlyphsLabel: "Coordinate o Sequenza di Glifi",
+    coordsOrGlyphsPlaceholder: "es. 043D:0072:0D44:005F o 105FD47243D",
+    undocumentedTitle: "Regione non documentata",
+    undocumentedMessage: "This region is currently undocumented."
   },
   th: {
     title: "ตรวจสอบการอ้างสิทธิ์ของภูมิภาค",
@@ -507,7 +556,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "ไม่พบภูมิภาคในฐานข้อมูล และน่าจะยังไม่มีการอ้างสิทธิ์",
     statusTitle: "สถานะการอ้างสิทธิ์",
     statusUnclaimedMessage: "ภูมิภาคนี้ได้รับการบันทึกว่ายังไม่มีการอ้างสิทธิ์ในขณะนี้",
-    statusClaimedMessage: (civ) => `ภูมิภาคนี้ถูกอ้างสิทธิ์โดย ${civ}`
+    statusClaimedMessage: (civ) => `ภูมิภาคนี้ถูกอ้างสิทธิ์โดย ${civ}`,
+    byName: "ตามชื่อภูมิภาค",
+    byCoordsGlyphs: "ตามพิกัด / กลิฟ",
+    selectGalaxy: "เลือกกาแล็กซี",
+    coordsOrGlyphsLabel: "พิกัดหรือลำดับกลิฟ",
+    coordsOrGlyphsPlaceholder: "เช่น 043D:0072:0D44:005F หรือ 105FD47243D",
+    undocumentedTitle: "ภูมิภาคที่ไม่ได้รับการบันทึก",
+    undocumentedMessage: "This region is currently undocumented."
   },
   hi: {
     title: "क्षेत्र के दावे की जाँच करें",
@@ -524,7 +580,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "क्षेत्र डेटाबेस में नहीं है, और संभवतः अदावाकृत है।",
     statusTitle: "दावे की स्थिति",
     statusUnclaimedMessage: "यह क्षेत्र वर्तमान में अदावाकृत दर्ज है",
-    statusClaimedMessage: (civ) => `इस क्षेत्र पर ${civ} द्वारा दावा किया गया है`
+    statusClaimedMessage: (civ) => `इस क्षेत्र पर ${civ} द्वारा दावा किया गया है`,
+    byName: "क्षेत्र के नाम से",
+    byCoordsGlyphs: "निर्देशांक / ग्लिफ़ द्वारा",
+    selectGalaxy: "आकाशगंगा चुनें",
+    coordsOrGlyphsLabel: "निर्देशांक या ग्लिफ़ अनुक्रम",
+    coordsOrGlyphsPlaceholder: "जैसे 043D:0072:0D44:005F या 105FD47243D",
+    undocumentedTitle: "अदस्तावेजी क्षेत्र",
+    undocumentedMessage: "This region is currently undocumented."
   },
   zh: {
     title: "检查区域声明",
@@ -541,7 +604,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "区域不在线，可能未被声明。",
     statusTitle: "声明状态",
     statusUnclaimedMessage: "该区域目前记录为未声明",
-    statusClaimedMessage: (civ) => `该区域被 ${civ} 声明`
+    statusClaimedMessage: (civ) => `该区域被 ${civ} 声明`,
+    byName: "按区域名称",
+    byCoordsGlyphs: "按坐标 / 符文",
+    selectGalaxy: "选择星系",
+    coordsOrGlyphsLabel: "坐标或符文序列",
+    coordsOrGlyphsPlaceholder: "例如 043D:0072:0D44:005F 或 105FD47243D",
+    undocumentedTitle: "未记录的区域",
+    undocumentedMessage: "This region is currently undocumented."
   },
   ja: {
     title: "リージョン要求の確認",
@@ -558,7 +628,14 @@ const claimTranslations: Record<SupportedLanguage, {
     inquireMessage: "リージョンはデータベースになく、おそらく未請求です。",
     statusTitle: "請求ステータス",
     statusUnclaimedMessage: "このリージョンは現在未請求として記録されています",
-    statusClaimedMessage: (civ) => `このリージョンは ${civ} によって請求されています`
+    statusClaimedMessage: (civ) => `このリージョンは ${civ} によって請求されています`,
+    byName: "リージョン名で検索",
+    byCoordsGlyphs: "座標 / グリフで検索",
+    selectGalaxy: "銀河を選択",
+    coordsOrGlyphsLabel: "座標またはグリフシーケンス",
+    coordsOrGlyphsPlaceholder: "例: 043D:0072:0D44:005F または 105FD47243D",
+    undocumentedTitle: "未記録のリージョン",
+    undocumentedMessage: "This region is currently undocumented."
   }
 };
 
@@ -600,7 +677,24 @@ export default function App() {
   // Settings menu visual state
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [settingsRotation, setSettingsRotation] = useState<number>(0);
+
+  // Glyph Tooltips setting state
+  const [glyphTooltipsEnabled, setGlyphTooltipsEnabled] = useState<boolean>(() => {
+    const cached = localStorage.getItem('agt_glyph_tooltips');
+    return cached === null ? true : cached === 'true';
+  });
+
+  const toggleGlyphTooltips = () => {
+    setGlyphTooltipsEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem('agt_glyph_tooltips', String(next));
+      return next;
+    });
+  };
+
+  const [hoveredQuickGlyph, setHoveredQuickGlyph] = useState<string | null>(null);
   const [showFavoritesModal, setShowFavoritesModal] = useState<boolean>(false);
+  const [showCoordsInfoModal, setShowCoordsInfoModal] = useState<boolean>(false);
   const [showChangeLogModal, setShowChangeLogModal] = useState<boolean>(false);
   const [changeLogGroups, setChangeLogGroups] = useState<ChangeLogGroup[]>([]);
   const [changeLogLoading, setChangeLogLoading] = useState<boolean>(false);
@@ -781,6 +875,7 @@ export default function App() {
   
   // Custom manual coordinates input vs manual glyph inputs
   const [manualCoordinates, setManualCoordinates] = useState<string>('');
+  const [selectedPlanet, setSelectedPlanet] = useState<number>(1);
   const [glyphInput, setGlyphInput] = useState<string>('');
 
   // Autocomplete state variables
@@ -790,6 +885,9 @@ export default function App() {
   const [showCivSuggestions, setShowCivSuggestions] = useState<boolean>(false);
 
   // Regional claim checker state
+  const [claimSearchMode, setClaimSearchMode] = useState<'name' | 'coords'>('name');
+  const [claimGalaxyInput, setClaimGalaxyInput] = useState<string>('Euclid');
+  const [claimCoordsOrGlyphsInput, setClaimCoordsOrGlyphsInput] = useState<string>('');
   const [claimRegionInput, setClaimRegionInput] = useState<string>('');
   const [showClaimSuggestions, setShowClaimSuggestions] = useState<boolean>(false);
   const [showClaimPopup, setShowClaimPopup] = useState<boolean>(false);
@@ -802,6 +900,24 @@ export default function App() {
   const [hasClaimPopupBeenClosed, setHasClaimPopupBeenClosed] = useState<boolean>(false);
   const [claimSectionFolded, setClaimSectionFolded] = useState<boolean>(true);
   const [conversionSectionFolded, setConversionSectionFolded] = useState<boolean>(true);
+
+  // Keep claimGalaxyInput synchronized with selectedGalaxy
+  useEffect(() => {
+    if (selectedGalaxy) {
+      setClaimGalaxyInput(selectedGalaxy);
+    }
+  }, [selectedGalaxy]);
+
+  // Available galaxies list for dropdown
+  const availableGalaxies = useMemo<string[]>(() => {
+    if (database?.galaxies && database.galaxies.length > 0) {
+      return database.galaxies;
+    }
+    if (database?.data) {
+      return Object.keys(database.data).sort();
+    }
+    return ['Euclid'];
+  }, [database]);
 
   // Keep autocomplete inputs synchronized with external selections (like random region picks or preset changes)
   useEffect(() => {
@@ -843,7 +959,7 @@ export default function App() {
       .slice(0, 10);
   }, [claimRegionInput, allRegionNames]);
 
-  // Global database search to find a region and retrieve its info
+  // Global database search to find a region and retrieve its info by Name
   const searchRegionInDb = (searchName: string) => {
     if (!database || !database.data) return null;
     const normalizedSearch = searchName.trim().toLowerCase();
@@ -871,38 +987,164 @@ export default function App() {
     return null;
   };
 
+  // Helper to extract voxel and coordinates from raw coordinates or 12-glyph portal sequence
+  const extractVoxelAndCoords = (input: string): { fullCoords: string; voxel: string } | null => {
+    const clean = input.trim().toUpperCase().replace(/[^0-9A-F:]/g, '');
+    if (!clean) return null;
+
+    // If clean string is 12 hex characters without colons, convert as glyph sequence
+    if (/^[0-9A-F]{12}$/.test(clean)) {
+      const converted = glyphs2Coords(clean);
+      if (converted) {
+        const parts = converted.split(':');
+        if (parts.length >= 3) {
+          const voxel = `${parts[0]}:${parts[1]}:${parts[2]}`;
+          return { fullCoords: converted, voxel };
+        }
+      }
+    }
+
+    // Otherwise parse colon-separated coordinates
+    const parts = clean.split(':').filter(Boolean);
+    if (parts.length >= 3) {
+      const p0 = parts[0].padStart(4, '0');
+      const p1 = parts[1].padStart(4, '0');
+      const p2 = parts[2].padStart(4, '0');
+      const p3 = parts[3] ? parts[3].padStart(4, '0') : '0000';
+      const fullCoords = `${p0}:${p1}:${p2}:${p3}`;
+      const voxel = `${p0}:${p1}:${p2}`;
+      return { fullCoords, voxel };
+    }
+
+    return null;
+  };
+
+  // Search region database by selected galaxy and coordinates or glyph sequence
+  const searchRegionByCoordsAndGalaxy = (galaxyName: string, input: string) => {
+    if (!database || !database.data) return null;
+    const parsed = extractVoxelAndCoords(input);
+    if (!parsed) return null;
+
+    const targetGalaxyLower = galaxyName.trim().toLowerCase();
+    
+    let matchedGalaxyKey: string | null = null;
+    for (const key of Object.keys(database.data)) {
+      if (key.trim().toLowerCase() === targetGalaxyLower) {
+        matchedGalaxyKey = key;
+        break;
+      }
+    }
+
+    if (!matchedGalaxyKey) return null;
+
+    const galaxyData = database.data[matchedGalaxyKey];
+    if (!galaxyData || !galaxyData.regions) return null;
+
+    let voxelMatchResult: { region: RegionInfo; civilization: string; galaxy: string } | null = null;
+
+    for (const civName of Object.keys(galaxyData.regions)) {
+      const regionsList = galaxyData.regions[civName];
+      if (!regionsList) continue;
+
+      for (const region of regionsList) {
+        if (!region.coordinates) continue;
+        const regClean = region.coordinates.trim().toUpperCase();
+        
+        // 1. Exact full coordinates match (e.g. 043D:0072:0D44:005F)
+        if (regClean === parsed.fullCoords) {
+          return {
+            region,
+            civilization: civName,
+            galaxy: matchedGalaxyKey
+          };
+        }
+
+        // 2. Voxel match (first 3 coordinate groups XXXX:YYYY:ZZZZ)
+        const regParts = regClean.split(':').filter(Boolean);
+        if (regParts.length >= 3) {
+          const regVoxel = `${regParts[0].padStart(4, '0')}:${regParts[1].padStart(4, '0')}:${regParts[2].padStart(4, '0')}`;
+          if (regVoxel === parsed.voxel && !voxelMatchResult) {
+            voxelMatchResult = {
+              region,
+              civilization: civName,
+              galaxy: matchedGalaxyKey
+            };
+          }
+        }
+      }
+    }
+
+    return voxelMatchResult;
+  };
+
   const handleCheckClaim = () => {
     setHasClaimPopupBeenClosed(false);
-    const searchName = claimRegionInput.trim();
-    if (!searchName) return;
-
-    const result = searchRegionInDb(searchName);
     const ct = claimTranslations[lang] || claimTranslations.en;
-    if (!result) {
-      setMatchingCivValue(null);
-      setMatchingCoordsValue(null);
-      setMatchingRegionObj(null);
-      setMatchingGalaxyValue(null);
-      setClaimPopupTitle(ct.inquireTitle);
-      setClaimPopupMessage(ct.inquireMessage);
-      setShowClaimPopup(true);
-    } else {
-      const civ = result.civilization;
-      const coords = result.region.coordinates;
-      setMatchingCivValue(civ);
-      setMatchingCoordsValue(coords);
-      setMatchingRegionObj(result.region);
-      setMatchingGalaxyValue(result.galaxy);
-      
-      const isBlank = !civ || civ.trim() === '' || civ.trim().toLowerCase() === 'null' || civ.trim().toLowerCase() === 'unclaimed' || civ.trim().toLowerCase() === 'uncharted';
-      if (isBlank) {
-        setClaimPopupTitle(ct.statusTitle);
-        setClaimPopupMessage(ct.statusUnclaimedMessage);
+
+    if (claimSearchMode === 'name') {
+      const searchName = claimRegionInput.trim();
+      if (!searchName) return;
+
+      const result = searchRegionInDb(searchName);
+      if (!result) {
+        setMatchingCivValue(null);
+        setMatchingCoordsValue(null);
+        setMatchingRegionObj(null);
+        setMatchingGalaxyValue(null);
+        setClaimPopupTitle(ct.inquireTitle);
+        setClaimPopupMessage(ct.inquireMessage);
+        setShowClaimPopup(true);
       } else {
-        setClaimPopupTitle(ct.statusTitle);
-        setClaimPopupMessage(ct.statusClaimedMessage(civ));
+        const civ = result.civilization;
+        const coords = result.region.coordinates;
+        setMatchingCivValue(civ);
+        setMatchingCoordsValue(coords);
+        setMatchingRegionObj(result.region);
+        setMatchingGalaxyValue(result.galaxy);
+        
+        const isBlank = !civ || civ.trim() === '' || civ.trim().toLowerCase() === 'null' || civ.trim().toLowerCase() === 'unclaimed' || civ.trim().toLowerCase() === 'uncharted';
+        if (isBlank) {
+          setClaimPopupTitle(ct.statusTitle);
+          setClaimPopupMessage(ct.statusUnclaimedMessage);
+        } else {
+          setClaimPopupTitle(ct.statusTitle);
+          setClaimPopupMessage(ct.statusClaimedMessage(civ));
+        }
+        setShowClaimPopup(true);
       }
-      setShowClaimPopup(true);
+    } else {
+      // Option 2: Search by Galaxy and Coordinates or Glyph Sequence
+      const targetGalaxy = claimGalaxyInput.trim() || selectedGalaxy || 'Euclid';
+      const inputVal = claimCoordsOrGlyphsInput.trim();
+      if (!inputVal) return;
+
+      const result = searchRegionByCoordsAndGalaxy(targetGalaxy, inputVal);
+      if (!result) {
+        setMatchingCivValue(null);
+        setMatchingCoordsValue(null);
+        setMatchingRegionObj(null);
+        setMatchingGalaxyValue(null);
+        setClaimPopupTitle(ct.undocumentedTitle || "Undocumented Region");
+        setClaimPopupMessage(ct.undocumentedMessage || "This region is currently undocumented.");
+        setShowClaimPopup(true);
+      } else {
+        const civ = result.civilization;
+        const coords = result.region.coordinates;
+        setMatchingCivValue(civ);
+        setMatchingCoordsValue(coords);
+        setMatchingRegionObj(result.region);
+        setMatchingGalaxyValue(result.galaxy);
+
+        const isBlank = !civ || civ.trim() === '' || civ.trim().toLowerCase() === 'null' || civ.trim().toLowerCase() === 'unclaimed' || civ.trim().toLowerCase() === 'uncharted';
+        if (isBlank) {
+          setClaimPopupTitle(ct.statusTitle);
+          setClaimPopupMessage(ct.statusUnclaimedMessage);
+        } else {
+          setClaimPopupTitle(ct.statusTitle);
+          setClaimPopupMessage(ct.statusClaimedMessage(civ));
+        }
+        setShowClaimPopup(true);
+      }
     }
   };
 
@@ -1477,10 +1719,27 @@ export default function App() {
     setSelectedRegion(coordinates);
     if (coordinates) {
       setManualCoordinates(coordinates);
-      const converted = coords2Glyphs(coordinates);
+      const converted = coords2Glyphs(coordinates, selectedPlanet);
       setGlyphInput(converted);
     } else {
       setGlyphInput('');
+    }
+  };
+
+  // Handle planet selection change
+  const handlePlanetChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const p = parseInt(e.target.value, 10) || 1;
+    setSelectedPlanet(p);
+
+    const cleanCoords = manualCoordinates.trim().toUpperCase();
+    if (cleanCoords && cleanCoords.split(':').length === 4) {
+      const converted = coords2Glyphs(cleanCoords, p);
+      if (converted) {
+        setGlyphInput(converted);
+      }
+    } else if (glyphInput.length === 12) {
+      const planetHex = Math.max(1, Math.min(6, p)).toString(16).toUpperCase();
+      setGlyphInput(planetHex + glyphInput.slice(1));
     }
   };
 
@@ -1492,7 +1751,7 @@ export default function App() {
     // Automatically convert if it matches standard NMS format 0C4F:007F:0D54:007A
     const formatted = rawVal.trim().toUpperCase();
     if (formatted.split(':').length === 4) {
-      const converted = coords2Glyphs(formatted);
+      const converted = coords2Glyphs(formatted, selectedPlanet);
       if (converted) {
         setGlyphInput(converted);
       }
@@ -1503,6 +1762,12 @@ export default function App() {
   const handleGlyphTextInput = (e: ChangeEvent<HTMLInputElement>) => {
     const validated = validateGlyphInput(e.target.value);
     setGlyphInput(validated);
+    if (validated.length > 0) {
+      const pHex = parseInt(validated[0], 16);
+      if (pHex >= 1 && pHex <= 6) {
+        setSelectedPlanet(pHex);
+      }
+    }
     if (validated.length === 12) {
       const reversedCoords = glyphs2Coords(validated);
       if (reversedCoords) {
@@ -1519,6 +1784,12 @@ export default function App() {
     const nextVal = glyphInput + char.toUpperCase();
     const validated = validateGlyphInput(nextVal);
     setGlyphInput(validated);
+    if (validated.length > 0) {
+      const pHex = parseInt(validated[0], 16);
+      if (pHex >= 1 && pHex <= 6) {
+        setSelectedPlanet(pHex);
+      }
+    }
     if (validated.length === 12) {
       const reversedCoords = glyphs2Coords(validated);
       if (reversedCoords) {
@@ -1536,7 +1807,7 @@ export default function App() {
     // Try manual coordinates first if populated
     const cleanCoords = manualCoordinates.trim().toUpperCase();
     if (cleanCoords) {
-      const converted = coords2Glyphs(cleanCoords);
+      const converted = coords2Glyphs(cleanCoords, selectedPlanet);
       if (converted && converted.length === 12) {
         targetCode = converted;
       }
@@ -2050,13 +2321,14 @@ export default function App() {
                       </h2>
                     </div>
                     <div className="flex items-center gap-3">
-                      {(manualCoordinates || glyphInput) && (
+                      {(manualCoordinates || glyphInput || selectedPlanet !== 1) && (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setManualCoordinates('');
                             setGlyphInput('');
+                            setSelectedPlanet(1);
                           }}
                           className="text-xs bg-[#E25530]/10 hover:bg-[#E25530]/20 border border-[#FF0500]/40 hover:border-[#FFB451] px-2.5 py-1 rounded text-[#FFB451] transition-all flex items-center gap-1 cursor-pointer active:scale-95 text-[10px] font-mono tracking-wider font-semibold"
                           title={t.clearFields}
@@ -2085,18 +2357,79 @@ export default function App() {
                         className="overflow-hidden"
                       >
                         <div className="pt-6 space-y-4">
-                          {/* Coordinates manual text entry */}
-                          <div className="space-y-1.5">
-                            <label className="text-xs block text-[#FFB451] uppercase tracking-wider">
-                              {t.galacticCoordinatesLabel}
-                            </label>
-                            <input 
-                              type="text"
-                              value={manualCoordinates}
-                              onChange={handleCoordsManualInput}
-                              placeholder="e.g. 0C4F:007F:0D54:007A"
-                              className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm tracking-wider focus:border-[#FF0500] focus:outline-none focus:ring-1 focus:ring-[#FF0500]/25 uppercase text-left text-[#FFB451] placeholder-[#FFB451]/35"
-                            />
+                          {/* Coordinates and Planet input fields on the same line */}
+                          <div className="flex items-start gap-3">
+                            {/* Coordinates manual text entry */}
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <label className="text-xs block text-[#FFB451] uppercase tracking-wider truncate">
+                                    {t.galacticCoordinatesLabel}
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowCoordsInfoModal(true)}
+                                    title="Galactic Coordinates Format Info"
+                                    className="p-0.5 text-[#FFB451]/70 hover:text-[#FFB451] hover:bg-zinc-800 rounded transition-colors cursor-pointer shrink-0"
+                                  >
+                                    <Info className="w-3.5 h-3.5 text-[#FFB451]" />
+                                  </button>
+                                </div>
+                                {manualCoordinates.trim() && (
+                                  <span
+                                    className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-1 uppercase tracking-wider shrink-0 transition-all ${
+                                      /^[0-9A-FA-F]{4}:[0-9A-FA-F]{4}:[0-9A-FA-F]{4}:[0-9A-FA-F]{4}$/.test(manualCoordinates.trim())
+                                        ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/60 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                                        : 'bg-red-950/80 text-red-400 border border-red-500/60 shadow-[0_0_8px_rgba(239,68,68,0.4)]'
+                                    }`}
+                                  >
+                                    {/^[0-9A-FA-F]{4}:[0-9A-FA-F]{4}:[0-9A-FA-F]{4}:[0-9A-FA-F]{4}$/.test(manualCoordinates.trim()) ? (
+                                      <>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        <span>Valid</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                                        <span>Invalid</span>
+                                      </>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                              <input 
+                                type="text"
+                                value={manualCoordinates}
+                                onChange={handleCoordsManualInput}
+                                placeholder="e.g. 043D:0072:0D44:005F"
+                                className={`w-full bg-zinc-900 rounded-lg p-3 text-sm tracking-wider focus:outline-none uppercase text-left placeholder-[#FFB451]/35 transition-all duration-300 ${
+                                  !manualCoordinates.trim()
+                                    ? 'border border-[#FF0500] text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/25'
+                                    : /^[0-9A-FA-F]{4}:[0-9A-FA-F]{4}:[0-9A-FA-F]{4}:[0-9A-FA-F]{4}$/.test(manualCoordinates.trim())
+                                      ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.6)] focus:ring-2 focus:ring-emerald-500/60'
+                                      : 'border-2 border-red-500 text-red-300 shadow-[0_0_15px_rgba(239,68,68,0.6)] focus:ring-2 focus:ring-red-500/60'
+                                }`}
+                              />
+                            </div>
+
+                            {/* Planet pull down menu */}
+                            <div className="w-24 shrink-0 space-y-1.5">
+                              <label className="text-xs block text-[#FFB451] uppercase tracking-wider text-center">
+                                {t.planetLabel}
+                              </label>
+                              <select
+                                id="planetSelectDropdown"
+                                value={selectedPlanet}
+                                onChange={handlePlanetChange}
+                                className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm tracking-wider focus:border-[#FF0500] focus:outline-none focus:ring-1 focus:ring-[#FF0500]/25 text-center text-[#FFB451] cursor-pointer"
+                              >
+                                {[1, 2, 3, 4, 5, 6].map(num => (
+                                  <option key={num} value={num} className="bg-zinc-900 text-[#FFB451]">
+                                    {num}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
 
                           {/* Glyph 12-char fallback string */}
@@ -2121,9 +2454,20 @@ export default function App() {
 
                           {/* Quickglyph selection row */}
                           <div className="space-y-1.5 pt-2 border-t border-zinc-900/50">
-                            <label className="text-[10px] block text-[#FFB451]/70 uppercase tracking-widest font-mono">
-                              {lang === 'es' ? 'Teclado de Glifos Rápido' : lang === 'fr' ? 'Clavier rapide de glyphes' : lang === 'de' ? 'Glyphen-Schnellwahltasten' : lang === 'pt' ? 'Teclado de Glifos Rápido' : 'Quick Glyph Input Keys'}
-                            </label>
+                            <div className="flex items-center justify-between min-h-[18px]">
+                              <label className="text-[10px] block text-[#FFB451]/70 uppercase tracking-widest font-mono">
+                                {lang === 'es' ? 'Teclado de Glifos Rápido' : lang === 'fr' ? 'Clavier rapide de glyphes' : lang === 'de' ? 'Glyphen-Schnellwahltasten' : lang === 'pt' ? 'Teclado de Glifos Rápido' : 'Quick Glyph Input Keys'}
+                              </label>
+                              {glyphTooltipsEnabled && hoveredQuickGlyph && glyphTranslations[lang]?.[hoveredQuickGlyph] && (
+                                <span className="text-[10px] font-mono font-bold text-[#FFB451] bg-zinc-950 border border-[#FF0500]/50 px-2 py-0.5 rounded shadow flex items-center gap-1.5 animate-fadeIn">
+                                  <span className="font-glyphs text-xs text-[#E25530]">{hoveredQuickGlyph}</span>
+                                  <span>{glyphTranslations[lang][hoveredQuickGlyph].name}</span>
+                                  <span className="text-[#FFB451]/60 text-[9px]">
+                                    (Index: {parseInt(hoveredQuickGlyph, 16)} / 0x{hoveredQuickGlyph})
+                                  </span>
+                                </span>
+                              )}
+                            </div>
                             <div 
                               className="grid gap-1 p-1 bg-zinc-900/35 rounded-lg border border-[#FF0500]/20 grid-cols-8 md:grid-cols-[repeat(16,minmax(0,1fr))]"
                             >
@@ -2132,11 +2476,31 @@ export default function App() {
                                   key={char}
                                   type="button"
                                   onClick={() => handleGlyphButtonClick(char)}
-                                  title={glyphTranslations[lang]?.[char]?.name || char}
+                                  onMouseEnter={() => setHoveredQuickGlyph(char)}
+                                  onMouseLeave={() => setHoveredQuickGlyph(null)}
+                                  title={glyphTooltipsEnabled ? undefined : undefined}
                                   className="bg-zinc-950/70 border border-[#FF0500]/30 hover:border-[#FFB451] hover:bg-[#E25530]/20 text-center py-1.5 px-0.5 md:px-1 text-base font-glyphs rounded cursor-pointer transition-all text-[#FFB451] flex flex-col items-center justify-center relative group active:scale-95"
                                 >
                                   <span className="font-glyphs select-none text-[18px]">{char}</span>
                                   <span className="text-[8px] font-mono leading-none text-[#FFB451]/40 group-hover:text-[#FFB451] mt-0.5 select-none">{char}</span>
+
+                                  {/* Interactive tooltip on hover */}
+                                  {glyphTooltipsEnabled && (
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center z-40 pointer-events-none">
+                                      <div className="bg-zinc-950 border border-[#FF0500] text-[#FFB451] text-[11px] font-mono py-1.5 px-2.5 rounded-md shadow-2xl flex flex-col items-center gap-0.5 whitespace-nowrap backdrop-blur-md">
+                                        <div className="flex items-center gap-1.5 font-bold">
+                                          <span className="font-glyphs text-sm text-[#E25530]">{char}</span>
+                                          <span className="text-white tracking-wide">
+                                            {glyphTranslations[lang]?.[char]?.name || char}
+                                          </span>
+                                        </div>
+                                        <div className="text-[9px] text-[#FFB451]/80 font-semibold tracking-wider uppercase">
+                                          Index: {parseInt(char, 16)} (0x{char})
+                                        </div>
+                                      </div>
+                                      <div className="w-1.5 h-1.5 bg-zinc-950 border-r border-b border-[#FF0500] rotate-45 -mt-1" />
+                                    </div>
+                                  )}
                                 </button>
                               ))}
                             </div>
@@ -2393,52 +2757,133 @@ export default function App() {
                             className="overflow-hidden"
                           >
                             <div className="pt-6 space-y-4" id="check-region-claim-section">
-                              <div className="space-y-1.5 relative">
-                                <label className="text-xs font-semibold uppercase tracking-wider block text-[#FFB451]">
-                                  {ct.regionName}
-                                </label>
-                                <div className="flex gap-2">
-                                  <div className="relative flex-1" id="claimRegionAutocompleteContainer">
-                                    <input
-                                      id="claimRegionInput"
-                                      type="text"
-                                      placeholder={ct.placeholder}
-                                      value={claimRegionInput}
-                                      onChange={(e) => {
-                                        setClaimRegionInput(e.target.value);
-                                        setShowClaimSuggestions(true);
-                                      }}
-                                      onFocus={() => setShowClaimSuggestions(true)}
-                                      onBlur={() => setTimeout(() => setShowClaimSuggestions(false), 250)}
-                                      className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all placeholder-[#FFB451]/30 font-semibold"
-                                    />
-                                    {showClaimSuggestions && filteredClaimRegions.length > 0 && (
-                                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-zinc-950 border border-[#FF0500] rounded-lg shadow-2xl">
-                                        {filteredClaimRegions.map(name => (
-                                          <div
-                                            key={name}
-                                            onMouseDown={() => {
-                                              setClaimRegionInput(name);
-                                              setShowClaimSuggestions(false);
-                                            }}
-                                            className="p-2.5 text-sm text-[#FFB451] hover:bg-[#E25530] hover:text-black font-semibold cursor-pointer transition-colors"
-                                          >
-                                            {name}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <button
-                                    id="checkRegionClaimBtn"
-                                    type="button"
-                                    onClick={handleCheckClaim}
-                                    className="bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-xs tracking-wider px-5 rounded-lg shadow-md hover:bg-[#E25530]/90 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-                                  >
-                                    {ct.checkBtn}
-                                  </button>
-                                </div>
+                              {/* Search Mode Toggle Tabs */}
+                              <div className="flex rounded-lg bg-zinc-900 p-1 border border-[#FF0500]/30 font-mono text-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => setClaimSearchMode('name')}
+                                  className={`flex-1 py-2 px-3 rounded-md font-bold uppercase transition-all cursor-pointer ${
+                                    claimSearchMode === 'name'
+                                      ? 'bg-[#E25530] text-black shadow-md'
+                                      : 'text-[#FFB451]/60 hover:text-[#FFB451]'
+                                  }`}
+                                >
+                                  {ct.byName}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setClaimSearchMode('coords')}
+                                  className={`flex-1 py-2 px-3 rounded-md font-bold uppercase transition-all cursor-pointer ${
+                                    claimSearchMode === 'coords'
+                                      ? 'bg-[#E25530] text-black shadow-md'
+                                      : 'text-[#FFB451]/60 hover:text-[#FFB451]'
+                                  }`}
+                                >
+                                  {ct.byCoordsGlyphs}
+                                </button>
                               </div>
+
+                              {/* Option 1: Search by Region Name */}
+                              {claimSearchMode === 'name' ? (
+                                <div className="space-y-1.5 relative">
+                                  <label className="text-xs font-semibold uppercase tracking-wider block text-[#FFB451]">
+                                    {ct.regionName}
+                                  </label>
+                                  <div className="flex gap-2">
+                                    <div className="relative flex-1" id="claimRegionAutocompleteContainer">
+                                      <input
+                                        id="claimRegionInput"
+                                        type="text"
+                                        placeholder={ct.placeholder}
+                                        value={claimRegionInput}
+                                        onChange={(e) => {
+                                          setClaimRegionInput(e.target.value);
+                                          setShowClaimSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowClaimSuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowClaimSuggestions(false), 250)}
+                                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all placeholder-[#FFB451]/30 font-semibold"
+                                      />
+                                      {showClaimSuggestions && filteredClaimRegions.length > 0 && (
+                                        <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-zinc-950 border border-[#FF0500] rounded-lg shadow-2xl">
+                                          {filteredClaimRegions.map(name => (
+                                            <div
+                                              key={name}
+                                              onMouseDown={() => {
+                                                setClaimRegionInput(name);
+                                                setShowClaimSuggestions(false);
+                                              }}
+                                              className="p-2.5 text-sm text-[#FFB451] hover:bg-[#E25530] hover:text-black font-semibold cursor-pointer transition-colors"
+                                            >
+                                              {name}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <button
+                                      id="checkRegionClaimBtn"
+                                      type="button"
+                                      onClick={handleCheckClaim}
+                                      className="bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-xs tracking-wider px-5 rounded-lg shadow-md hover:bg-[#E25530]/90 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                                    >
+                                      {ct.checkBtn}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                /* Option 2: Search by Galaxy & Coordinates / Glyphs */
+                                <div className="space-y-3">
+                                  {/* Galaxy Selector */}
+                                  <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold uppercase tracking-wider block text-[#FFB451]">
+                                      {ct.selectGalaxy}
+                                    </label>
+                                    <select
+                                      id="claimGalaxySelect"
+                                      value={claimGalaxyInput}
+                                      onChange={(e) => setClaimGalaxyInput(e.target.value)}
+                                      className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all font-semibold cursor-pointer"
+                                    >
+                                      {availableGalaxies.map((g) => (
+                                        <option key={g} value={g} className="bg-zinc-950 text-[#FFB451]">
+                                          {g}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* Coordinates or Glyph Sequence Input */}
+                                  <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold uppercase tracking-wider block text-[#FFB451]">
+                                      {ct.coordsOrGlyphsLabel}
+                                    </label>
+                                    <div className="flex gap-2">
+                                      <input
+                                        id="claimCoordsOrGlyphsInput"
+                                        type="text"
+                                        placeholder={ct.coordsOrGlyphsPlaceholder}
+                                        value={claimCoordsOrGlyphsInput}
+                                        onChange={(e) => setClaimCoordsOrGlyphsInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            handleCheckClaim();
+                                          }
+                                        }}
+                                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all placeholder-[#FFB451]/30 font-mono uppercase font-semibold"
+                                      />
+                                      <button
+                                        id="checkRegionClaimByCoordsBtn"
+                                        type="button"
+                                        onClick={handleCheckClaim}
+                                        className="bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-xs tracking-wider px-5 rounded-lg shadow-md hover:bg-[#E25530]/90 active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0"
+                                      >
+                                        {ct.checkBtn}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
 
                               {/* Display the matching Civilized field in the UI if region is found */}
                               {matchingRegionObj && (
@@ -2474,7 +2919,7 @@ export default function App() {
                                     type="button"
                                     onClick={() => {
                                       setManualCoordinates(matchingCoordsValue);
-                                      const glyphs = coords2Glyphs(matchingCoordsValue);
+                                      const glyphs = coords2Glyphs(matchingCoordsValue, selectedPlanet);
                                       setGlyphInput(glyphs || '');
                                       if (matchingGalaxyValue) {
                                         setSelectedGalaxy(matchingGalaxyValue);
@@ -2878,28 +3323,61 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Audio mute settings toggle */}
-              <div className="space-y-2">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  {t.settingsAgtAnthemLabel}
-                </label>
-                <button
-                  onClick={toggleMute}
-                  className="w-full bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-xs font-mono py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer"
-                >
-                  {muted ? (
-                    <>
-                      <VolumeX className="w-4 h-4 text-black" />
-                      <span>{t.settingsUnmuteBtn}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 className="w-4 h-4 text-black" />
-                      <span>{t.settingsMuteBtn}</span>
-                    </>
-                  )
-                  }
-                </button>
+              {/* Anthem and Tooltips controls side-by-side in a 2-column grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Audio mute settings toggle */}
+                <div className="space-y-1.5 min-w-0">
+                  <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
+                    {t.settingsAgtAnthemLabel}
+                  </label>
+                  <button
+                    id="anthemToggleBtn"
+                    type="button"
+                    onClick={toggleMute}
+                    className="w-full bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-xs font-mono py-2.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis shadow-md"
+                  >
+                    {muted ? (
+                      <>
+                        <VolumeX className="w-4 h-4 text-black shrink-0" />
+                        <span className="truncate">
+                          <span className="hidden sm:inline">{t.settingsUnmuteBtn} </span>
+                          <span>{t.settingsAgtAnthemLabel}</span>
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-4 h-4 text-black shrink-0" />
+                        <span className="truncate">
+                          <span className="hidden sm:inline">{t.settingsMuteBtn} </span>
+                          <span>{t.settingsAgtAnthemLabel}</span>
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Glyph Tooltips toggle */}
+                <div className="space-y-1.5 min-w-0">
+                  <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
+                    {t.settingsGlyphTooltipsLabel}
+                  </label>
+                  <button
+                    id="glyphTooltipsToggleBtn"
+                    type="button"
+                    onClick={toggleGlyphTooltips}
+                    className={`w-full font-bold uppercase text-xs font-mono py-2.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer border whitespace-nowrap overflow-hidden text-ellipsis ${
+                      glyphTooltipsEnabled
+                        ? 'bg-[#E25530] text-black border-[#FF0500] shadow-md'
+                        : 'bg-zinc-900 text-[#FFB451]/60 border-[#FF0500]/40 hover:text-[#FFB451]'
+                    }`}
+                  >
+                    <Info className="w-4 h-4 shrink-0" />
+                    <span className="truncate">
+                      <span className="hidden sm:inline">Tooltips: </span>
+                      <span>{glyphTooltipsEnabled ? 'ON' : 'OFF'}</span>
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Change Log Button */}
@@ -3159,6 +3637,87 @@ export default function App() {
                 <button
                   onClick={() => setShowChangeLogModal(false)}
                   className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
+                >
+                  {t.close}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Galactic Coordinates Info Modal */}
+      <AnimatePresence>
+        {showCoordsInfoModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md bg-zinc-950 border border-[#FF0500] rounded-xl p-6 shadow-2xl relative flex flex-col text-[#FFB451] space-y-4"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-[#FF0500] pb-3 text-[#FFB451] shrink-0">
+                <div className="flex items-center gap-2">
+                  <Info className="w-5 h-5 text-[#FF0500]" />
+                  <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
+                    Galactic Coordinates Format
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCoordsInfoModal(false)}
+                  className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 text-black font-bold" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="space-y-4 font-mono text-xs">
+                <div className="bg-zinc-900/90 border border-[#FF0500]/40 p-3.5 rounded-lg text-center space-y-1 shadow-inner">
+                  <div className="text-[10px] text-[#FFB451]/70 uppercase tracking-widest font-semibold">
+                    Expected NMS Format
+                  </div>
+                  <div className="text-lg font-extrabold tracking-widest text-[#FFB451] select-all">
+                    043D:0072:0D44:005F
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 leading-relaxed text-[#FFB451]/90 text-[11px]">
+                  <p>
+                    Galactic coordinates consist of four 4-character hexadecimal groups separated by colons (<code className="text-[#FFB451] font-bold">XXXX:YYYY:ZZZZ:SSSS</code>):
+                  </p>
+                  <ul className="space-y-1.5 pl-1">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-[#E25530] font-bold">•</span>
+                      <span><strong className="text-[#FFB451]">XXXX</strong>: X-axis Galactic Position (0000 - 0FFF)</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-[#E25530] font-bold">•</span>
+                      <span><strong className="text-[#FFB451]">YYYY</strong>: Y-axis Height / Elevation (0000 - 00FF)</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-[#E25530] font-bold">•</span>
+                      <span><strong className="text-[#FFB451]">ZZZZ</strong>: Z-axis Galactic Position (0000 - 0FFF)</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-[#E25530] font-bold">•</span>
+                      <span><strong className="text-[#FFB451]">SSSS</strong>: Solar System Index within voxel (0001 - 02FF)</span>
+                    </li>
+                  </ul>
+                  <p className="pt-2 text-[10px] text-[#FFB451]/70 border-t border-zinc-900 leading-normal">
+                    This 16-character format maps directly to 12 Portal Glyphs used to warp between star systems in No Man's Sky.
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Footer Button */}
+              <div className="pt-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowCoordsInfoModal(false)}
+                  className="w-full bg-[#E25530] text-black font-extrabold font-mono border border-[#FF0500] uppercase text-xs tracking-wider py-2 rounded-lg cursor-pointer hover:bg-[#E25530]/90 transition-all active:scale-98 shadow-md"
                 >
                   {t.close}
                 </button>
