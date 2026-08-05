@@ -681,13 +681,27 @@ export default function App() {
   // Glyph Tooltips setting state
   const [glyphTooltipsEnabled, setGlyphTooltipsEnabled] = useState<boolean>(() => {
     const cached = localStorage.getItem('agt_glyph_tooltips');
-    return cached === null ? true : cached === 'true';
+    return cached === null ? false : cached === 'true';
   });
 
   const toggleGlyphTooltips = () => {
     setGlyphTooltipsEnabled(prev => {
       const next = !prev;
       localStorage.setItem('agt_glyph_tooltips', String(next));
+      return next;
+    });
+  };
+
+  // Glyph Generation Sound Toggle state
+  const [dataSoundEnabled, setDataSoundEnabled] = useState<boolean>(() => {
+    const cached = localStorage.getItem('agt_data_sound');
+    return cached === 'true'; // Off by default (cached === 'true' is false when cached is null/undefined/'false')
+  });
+
+  const toggleDataSound = () => {
+    setDataSoundEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem('agt_data_sound', String(next));
       return next;
     });
   };
@@ -792,6 +806,59 @@ export default function App() {
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playFlippingSound = (isReveal: boolean = false) => {
+    if (!dataSoundEnabled) return;
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContextClass();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const now = ctx.currentTime;
+
+      if (isReveal) {
+        // High quality digital lock sound
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1400, now);
+        osc.frequency.exponentialRampToValueAtTime(700, now + 0.12);
+
+        gain.gain.setValueAtTime(0.03, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else {
+        // High quality sci-fi fast clicking/flipping sound
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1800 + Math.random() * 400, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.025);
+
+        gain.gain.setValueAtTime(0.012, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.025);
+      }
+    } catch (e) {
+      // Ignore audio failure or autoplay restrictions
+    }
+  };
 
   // Initialize and load background audio loop
   useEffect(() => {
@@ -1827,10 +1894,19 @@ export default function App() {
       return;
     }
 
+    const reversedCoords = glyphs2Coords(targetCode);
+    if (reversedCoords) {
+      setManualCoordinates(reversedCoords);
+    }
+
     setIsRolling(true);
     setGeneratedCode(targetCode);
     setRevealedCount(0);
     setRollSymbols(Array(12).fill('0'));
+
+    setTimeout(() => {
+      document.getElementById('portalResultsBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 
     const slotDuration = 800; // Duration each slot spins
     const staggerDelay = 100; // Delay before starting next slot
@@ -1845,6 +1921,7 @@ export default function App() {
             next[index] = randomGlyph();
             return next;
           });
+          playFlippingSound(false);
         }, 80);
         intervals[index] = intervalId;
 
@@ -1857,6 +1934,7 @@ export default function App() {
             return next;
           });
           setRevealedCount(prev => prev + 1);
+          playFlippingSound(true);
           
           if (index === 11) {
             setIsRolling(false);
@@ -1878,10 +1956,19 @@ export default function App() {
       return;
     }
 
+    const reversedCoords = glyphs2Coords(targetCode);
+    if (reversedCoords) {
+      setManualCoordinates(reversedCoords);
+    }
+
     setIsRolling(true);
     setGeneratedCode(targetCode);
     setRevealedCount(0);
     setRollSymbols(Array(12).fill('0'));
+
+    setTimeout(() => {
+      document.getElementById('portalResultsBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 
     // Interval timers for each slot
     const slotDuration = 800; // Duration each slot spins
@@ -1899,6 +1986,7 @@ export default function App() {
             next[index] = randomGlyph();
             return next;
           });
+          playFlippingSound(false);
         }, 80);
         intervals[index] = intervalId;
 
@@ -1911,6 +1999,7 @@ export default function App() {
             return next;
           });
           setRevealedCount(prev => prev + 1);
+          playFlippingSound(true);
           
           if (index === 11) {
             setIsRolling(false);
@@ -2462,9 +2551,6 @@ export default function App() {
                                 <span className="text-[10px] font-mono font-bold text-[#FFB451] bg-zinc-950 border border-[#FF0500]/50 px-2 py-0.5 rounded shadow flex items-center gap-1.5 animate-fadeIn">
                                   <span className="font-glyphs text-xs text-[#E25530]">{hoveredQuickGlyph}</span>
                                   <span>{glyphTranslations[lang][hoveredQuickGlyph].name}</span>
-                                  <span className="text-[#FFB451]/60 text-[9px]">
-                                    (Index: {parseInt(hoveredQuickGlyph, 16)} / 0x{hoveredQuickGlyph})
-                                  </span>
                                 </span>
                               )}
                             </div>
@@ -2493,9 +2579,6 @@ export default function App() {
                                           <span className="text-white tracking-wide">
                                             {glyphTranslations[lang]?.[char]?.name || char}
                                           </span>
-                                        </div>
-                                        <div className="text-[9px] text-[#FFB451]/80 font-semibold tracking-wider uppercase">
-                                          Index: {parseInt(char, 16)} (0x{char})
                                         </div>
                                       </div>
                                       <div className="w-1.5 h-1.5 bg-zinc-950 border-r border-b border-[#FF0500] rotate-45 -mt-1" />
@@ -2928,10 +3011,24 @@ export default function App() {
                                       // Trigger roll directly
                                       const targetCode = generateGlyphs(glyphs || '');
                                       if (targetCode) {
+                                        const reversedCoords = glyphs2Coords(targetCode);
+                                        if (reversedCoords) {
+                                          setManualCoordinates(reversedCoords);
+                                        } else {
+                                          setManualCoordinates(matchingCoordsValue);
+                                        }
+                                        if (matchingGalaxyValue) {
+                                          setSelectedGalaxy(matchingGalaxyValue);
+                                        }
+
                                         setIsRolling(true);
                                         setGeneratedCode(targetCode);
                                         setRevealedCount(0);
                                         setRollSymbols(Array(12).fill('0'));
+
+                                        setTimeout(() => {
+                                          document.getElementById('portalResultsBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }, 100);
 
                                         const slotDuration = 800;
                                         const staggerDelay = 100;
@@ -2945,6 +3042,7 @@ export default function App() {
                                                 next[index] = randomGlyph();
                                                 return next;
                                               });
+                                              playFlippingSound(false);
                                             }, 80);
                                             intervals[index] = intervalId;
 
@@ -2956,6 +3054,7 @@ export default function App() {
                                                 return next;
                                               });
                                               setRevealedCount(prev => prev + 1);
+                                              playFlippingSound(true);
                                               
                                               if (index === 11) {
                                                 setIsRolling(false);
@@ -3114,6 +3213,7 @@ export default function App() {
                           setGlyphInput('');
                           setManualCoordinates('');
                           setGeneratedCode('000000000000');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         disabled={isRolling}
                         className="bg-[#E25530] hover:bg-[#E25530]/90 border border-[#E25530] text-white rounded-md transition-all flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-8 w-8 shrink-0"
@@ -3124,37 +3224,34 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Glyph translation & mythos inside the Portal Signal Spectrum Panel */}
+                  <div className="w-full mt-3 text-[#FFB451] font-mono self-stretch" style={{ fontFamily: '"geonms-font", sans-serif' }}>
+                    {hoveredGlyph && glyphTranslations[lang] && glyphTranslations[lang][hoveredGlyph] ? (
+                      <motion.div 
+                        key={hoveredGlyph}
+                        initial={{ opacity: 0, y: 3 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-zinc-900/45 p-3 rounded-lg border border-zinc-900/60"
+                      >
+                        <div className="flex items-center justify-between font-bold mb-1 pb-1">
+                          <span className="text-[#FFB451] uppercase tracking-wider text-[11px] sm:text-xs font-extrabold font-mono">
+                            GLYPH #{hoveredGlyph} : {glyphTranslations[lang][hoveredGlyph].name}
+                          </span>
+                          <span className="font-glyphs text-base text-[#FFB451]">{hoveredGlyph.toUpperCase()}</span>
+                        </div>
+                        <p className="text-[#FFB451]/95 text-xs sm:text-sm leading-relaxed font-sans">
+                          {glyphTranslations[lang][hoveredGlyph].desc}
+                        </p>
+                      </motion.div>
+                    ) : (
+                      <div className="text-[#FFB451]/75 text-xs text-center p-3 bg-zinc-900/15 rounded-lg border border-zinc-900/40 font-mono leading-relaxed">
+                        {t.glyphHoverInstructions}
+                      </div>
+                    )}
+                  </div>
+
                 </div>
 
-              </div>
-
-              {/* Glyph Explanation Box - Fully standalone full-screen width display card */}
-              <div className="w-full bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl text-[#FFB451]" style={{ fontFamily: '"geonms-font", sans-serif' }}>
-                <h3 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest mb-4 border-b border-zinc-900 pb-2.5">
-                  {t.glyphTranslationMythosTitle}
-                </h3>
-                {hoveredGlyph && glyphTranslations[lang] && glyphTranslations[lang][hoveredGlyph] ? (
-                  <motion.div 
-                    key={hoveredGlyph}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-zinc-900/30 p-4 rounded-lg border border-zinc-800"
-                  >
-                    <div className="flex items-center justify-between font-bold mb-2 border-b border-zinc-800 pb-2">
-                      <span className="text-[#FFB451] uppercase tracking-wider text-xs font-extrabold font-mono">
-                        GLYPH #{hoveredGlyph} : {glyphTranslations[lang][hoveredGlyph].name}
-                      </span>
-                      <span className="font-glyphs text-lg text-[#FFB451]">{hoveredGlyph.toUpperCase()}</span>
-                    </div>
-                    <p className="text-[#FFB451] text-[15px] leading-relaxed font-sans">
-                      {glyphTranslations[lang][hoveredGlyph].desc}
-                    </p>
-                  </motion.div>
-                ) : (
-                  <div className="text-[#FFB451] text-[15px] text-center p-6 bg-zinc-900/10 rounded-lg border border border-zinc-900/50 font-mono leading-relaxed">
-                    {t.glyphHoverInstructions}
-                  </div>
-                )}
               </div>
 
               {/* AGT MINI MAP REGION LOCATOR box (Mini map locator box) */}
@@ -3229,26 +3326,31 @@ export default function App() {
         className="w-full bg-[#FFB451] mt-16 py-8 px-4 text-center text-[13px] tracking-wider relative z-10 text-black border-t border-[#FF0500]/20"
         style={{ fontFamily: '"geonms-font", sans-serif' }}
       >
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-center items-center gap-x-3 gap-y-2 select-none h-auto">
-          <a href="https://www.nms-agt.com/" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Home</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/about-the-agt" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">About</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/team" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Team</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/contribute" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Contribute</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/agt-galactic-archives" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Galactic Archives</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/engage" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Engage</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/agt-navi" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">AGT NAVI</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/terms" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Terms</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/support" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Support</a>
-          <span className="text-black font-bold">|</span>
-          <a href="https://www.nms-agt.com/terms/copyright" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Copyright</a>
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-3 select-none">
+          <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 h-auto">
+            <a href="https://www.nms-agt.com/" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Home</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/about-the-agt" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">About</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/team" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Team</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/contribute" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Contribute</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/agt-galactic-archives" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Galactic Archives</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/engage" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Engage</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/agt-navi" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">AGT NAVI</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/terms" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Terms</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/support" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Support</a>
+            <span className="text-black font-bold">|</span>
+            <a href="https://www.nms-agt.com/terms/copyright" target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:underline transition-all">Copyright</a>
+          </div>
+          <div className="text-xs opacity-80 mt-1 font-semibold">
+            © {new Date().getFullYear()} Alliance of Galactic Travellers
+          </div>
         </div>
       </footer>
 
@@ -3272,130 +3374,131 @@ export default function App() {
                     {t.settingsTitle}
                   </span>
                 </div>
-                <button 
-                  onClick={() => setShowSettings(false)}
-                  className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
-                >
-                  <X className="w-4 h-4 text-black font-bold" />
-                </button>
-              </div>
-
-              {/* Language pull-down selection */}
-              <div className="space-y-2">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  {t.settingsLanguageLabel}
-                </label>
-                <div className="relative">
-                  <select 
-                    id="settings-lang-select"
-                    value={lang} 
-                    onChange={handleLanguageChange}
-                    className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
+                <div className="flex items-center gap-2">
+                  <button
+                    id="headerChangeLogButton"
+                    onClick={() => {
+                      setShowChangeLogModal(true);
+                      fetchChangeLog();
+                    }}
+                    title={t.changeLog}
+                    className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
                   >
-                    {Object.keys(translations).map((l) => (
-                      <option key={l} value={l} className="bg-zinc-950 text-[#FFB451]">
-                        {languageNames[l as SupportedLanguage]}
-                      </option>
-                    ))}
-                  </select>
+                    <FileText className="w-4 h-4 text-black" />
+                  </button>
+                  <button 
+                    onClick={() => setShowSettings(false)}
+                    className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <X className="w-4 h-4 text-black font-bold" />
+                  </button>
                 </div>
               </div>
 
-              {/* Desktop Text Scale settings */}
-              <div className="space-y-2">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  {t.settingsTextScaleLabel}
-                </label>
-                <div className="relative">
-                  <select 
-                    id="settings-scale-select"
-                    value={desktopTextScale} 
-                    onChange={handleTextScaleChange}
-                    className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
-                  >
-                    <option value="1x" className="bg-zinc-950 text-[#FFB451]">{t.settingsScaleDefault}</option>
-                    <option value="1.25x" className="bg-zinc-950 text-[#FFB451]">1.25x</option>
-                    <option value="1.5x" className="bg-zinc-950 text-[#FFB451]">1.5x</option>
-                    <option value="2x" className="bg-zinc-950 text-[#FFB451]">2x</option>
-                    <option value="2.5x" className="bg-zinc-950 text-[#FFB451]">2.5x</option>
-                    <option value="3x" className="bg-zinc-950 text-[#FFB451]">3x</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Anthem and Tooltips controls side-by-side in a 2-column grid */}
+              {/* Language and Font Scale settings side-by-side */}
               <div className="grid grid-cols-2 gap-3">
+                {/* Language pull-down selection */}
+                <div className="space-y-2 min-w-0">
+                  <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
+                    {t.settingsLanguageLabel}
+                  </label>
+                  <div className="relative">
+                    <select 
+                      id="settings-lang-select"
+                      value={lang} 
+                      onChange={handleLanguageChange}
+                      className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
+                    >
+                      {Object.keys(translations).map((l) => (
+                        <option key={l} value={l} className="bg-zinc-950 text-[#FFB451]">
+                          {languageNames[l as SupportedLanguage]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Desktop Text Scale settings */}
+                <div className="space-y-2 min-w-0">
+                  <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
+                    {t.settingsTextScaleLabel}
+                  </label>
+                  <div className="relative">
+                    <select 
+                      id="settings-scale-select"
+                      value={desktopTextScale} 
+                      onChange={handleTextScaleChange}
+                      className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
+                    >
+                      <option value="1x" className="bg-zinc-950 text-[#FFB451]">{t.settingsScaleDefault}</option>
+                      <option value="1.25x" className="bg-zinc-950 text-[#FFB451]">1.25x</option>
+                      <option value="1.5x" className="bg-zinc-950 text-[#FFB451]">1.5x</option>
+                      <option value="2x" className="bg-zinc-950 text-[#FFB451]">2x</option>
+                      <option value="2.5x" className="bg-zinc-950 text-[#FFB451]">2.5x</option>
+                      <option value="3x" className="bg-zinc-950 text-[#FFB451]">3x</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Anthem, Tooltips, and Data SFX controls side-by-side in a 3-column grid */}
+              <div className="grid grid-cols-3 gap-3">
                 {/* Audio mute settings toggle */}
                 <div className="space-y-1.5 min-w-0">
-                  <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
+                  <label className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
                     {t.settingsAgtAnthemLabel}
                   </label>
                   <button
                     id="anthemToggleBtn"
                     type="button"
                     onClick={toggleMute}
-                    className="w-full bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-xs font-mono py-2.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis shadow-md"
+                    className="w-full bg-[#E25530] text-black border border-[#FF0500] font-bold uppercase text-xs font-mono py-2.5 px-2 rounded-lg flex items-center justify-center transition-transform active:scale-95 cursor-pointer shadow-md"
                   >
                     {muted ? (
-                      <>
-                        <VolumeX className="w-4 h-4 text-black shrink-0" />
-                        <span className="truncate">
-                          <span className="hidden sm:inline">{t.settingsUnmuteBtn} </span>
-                          <span>{t.settingsAgtAnthemLabel}</span>
-                        </span>
-                      </>
+                      <VolumeX className="w-4 h-4 text-black shrink-0" />
                     ) : (
-                      <>
-                        <Volume2 className="w-4 h-4 text-black shrink-0" />
-                        <span className="truncate">
-                          <span className="hidden sm:inline">{t.settingsMuteBtn} </span>
-                          <span>{t.settingsAgtAnthemLabel}</span>
-                        </span>
-                      </>
+                      <Volume2 className="w-4 h-4 text-black shrink-0" />
                     )}
                   </button>
                 </div>
 
                 {/* Glyph Tooltips toggle */}
                 <div className="space-y-1.5 min-w-0">
-                  <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
+                  <label className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
                     {t.settingsGlyphTooltipsLabel}
                   </label>
                   <button
                     id="glyphTooltipsToggleBtn"
                     type="button"
                     onClick={toggleGlyphTooltips}
-                    className={`w-full font-bold uppercase text-xs font-mono py-2.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer border whitespace-nowrap overflow-hidden text-ellipsis ${
+                    className={`w-full font-bold uppercase text-xs font-mono py-2.5 px-2 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer border ${
                       glyphTooltipsEnabled
                         ? 'bg-[#E25530] text-black border-[#FF0500] shadow-md'
                         : 'bg-zinc-900 text-[#FFB451]/60 border-[#FF0500]/40 hover:text-[#FFB451]'
                     }`}
                   >
-                    <Info className="w-4 h-4 shrink-0" />
-                    <span className="truncate">
-                      <span className="hidden sm:inline">Tooltips: </span>
-                      <span>{glyphTooltipsEnabled ? 'ON' : 'OFF'}</span>
-                    </span>
+                    <span>{glyphTooltipsEnabled ? 'ON' : 'OFF'}</span>
                   </button>
                 </div>
-              </div>
 
-              {/* Change Log Button */}
-              <div className="space-y-2 border-t border-[#FF0500]/50 pt-4">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451]">
-                  {t.changeLog}
-                </label>
-                <button
-                  id="changeLogButton"
-                  onClick={() => {
-                    setShowChangeLogModal(true);
-                    fetchChangeLog();
-                  }}
-                  className="w-full bg-[#E25530] hover:bg-[#E25530]/90 text-black border border-[#FF0500] font-extrabold uppercase text-xs font-mono py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-md"
-                >
-                  <FileText className="w-4 h-4 text-black font-bold" />
-                  <span>{t.changeLog}</span>
-                </button>
+                {/* Glyph Generation sound toggle */}
+                <div className="space-y-1.5 min-w-0">
+                  <label className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider block text-[#FFB451] truncate">
+                    {t.settingsDataSoundLabel}
+                  </label>
+                  <button
+                    id="dataSoundToggleBtn"
+                    type="button"
+                    onClick={toggleDataSound}
+                    className={`w-full font-bold uppercase text-xs font-mono py-2.5 px-2 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer border ${
+                      dataSoundEnabled
+                        ? 'bg-[#E25530] text-black border-[#FF0500] shadow-md'
+                        : 'bg-zinc-900 text-[#FFB451]/60 border-[#FF0500]/40 hover:text-[#FFB451]'
+                    }`}
+                  >
+                    <span>{dataSoundEnabled ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Civ Region DB Sync block */}
@@ -3654,13 +3757,13 @@ export default function App() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md bg-zinc-950 border border-[#FF0500] rounded-xl p-6 shadow-2xl relative flex flex-col text-[#FFB451] space-y-4"
+              className="w-full max-w-md md:max-w-xl lg:max-w-2xl bg-zinc-950 border border-[#FF0500] rounded-xl p-6 shadow-2xl relative flex flex-col text-[#FFB451] space-y-4 max-h-[90vh]"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-[#FF0500] pb-3 text-[#FFB451] shrink-0">
                 <div className="flex items-center gap-2">
                   <Info className="w-5 h-5 text-[#FF0500]" />
-                  <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
+                  <span className="text-sm sm:text-base md:text-lg font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
                     Galactic Coordinates Format
                   </span>
                 </div>
@@ -3674,40 +3777,40 @@ export default function App() {
               </div>
 
               {/* Modal Body */}
-              <div className="space-y-4 font-mono text-xs">
+              <div className="space-y-4 font-mono text-sm sm:text-base overflow-y-auto pr-1.5 coords-info-scrollbar max-h-[60vh]">
                 <div className="bg-zinc-900/90 border border-[#FF0500]/40 p-3.5 rounded-lg text-center space-y-1 shadow-inner">
-                  <div className="text-[10px] text-[#FFB451]/70 uppercase tracking-widest font-semibold">
+                  <div className="text-[11px] sm:text-xs text-[#FFB451]/70 uppercase tracking-widest font-semibold">
                     Expected NMS Format
                   </div>
-                  <div className="text-lg font-extrabold tracking-widest text-[#FFB451] select-all">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-widest text-[#FFB451] select-all">
                     043D:0072:0D44:005F
                   </div>
                 </div>
 
-                <div className="space-y-2.5 leading-relaxed text-[#FFB451]/90 text-[11px]">
+                <div className="space-y-3.5 leading-relaxed text-[#FFB451]/90 text-xs sm:text-sm md:text-base">
                   <p>
                     Galactic coordinates consist of four 4-character hexadecimal groups separated by colons (<code className="text-[#FFB451] font-bold">XXXX:YYYY:ZZZZ:SSSS</code>):
                   </p>
-                  <ul className="space-y-1.5 pl-1">
+                  <ul className="space-y-2 pl-1">
                     <li className="flex items-start gap-1.5">
                       <span className="text-[#E25530] font-bold">•</span>
-                      <span><strong className="text-[#FFB451]">XXXX</strong>: X-axis Galactic Position (0000 - 0FFF)</span>
+                      <span><strong className="text-[#FFB451]">XXXX</strong>: X-Axis (0000 - 0FFF)</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="text-[#E25530] font-bold">•</span>
-                      <span><strong className="text-[#FFB451]">YYYY</strong>: Y-axis Height / Elevation (0000 - 00FF)</span>
+                      <span><strong className="text-[#FFB451]">YYYY</strong>: Y-Axis Height (0000 - 00FF)</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="text-[#E25530] font-bold">•</span>
-                      <span><strong className="text-[#FFB451]">ZZZZ</strong>: Z-axis Galactic Position (0000 - 0FFF)</span>
+                      <span><strong className="text-[#FFB451]">ZZZZ</strong>: Z-Axis (0000 - 0FFF)</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="text-[#E25530] font-bold">•</span>
-                      <span><strong className="text-[#FFB451]">SSSS</strong>: Solar System Index within voxel (0001 - 02FF)</span>
+                      <span><strong className="text-[#FFB451]">SSSS</strong>: Solar System Index (0001 - 0FFF)</span>
                     </li>
                   </ul>
-                  <p className="pt-2 text-[10px] text-[#FFB451]/70 border-t border-zinc-900 leading-normal">
-                    This 16-character format maps directly to 12 Portal Glyphs used to warp between star systems in No Man's Sky.
+                  <p className="pt-3 text-[11px] sm:text-xs md:text-sm text-[#FFB451]/70 border-t border-zinc-900 leading-normal">
+                    The Solar System Index will typically have an upper range limit between 00D9-0249 for normal stars.  There are valid purple stars in the SSI range of 03E8-0429. Other stars outside this range are phantom stars and cannot be accessed by portals.
                   </p>
                 </div>
               </div>
@@ -3717,7 +3820,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setShowCoordsInfoModal(false)}
-                  className="w-full bg-[#E25530] text-black font-extrabold font-mono border border-[#FF0500] uppercase text-xs tracking-wider py-2 rounded-lg cursor-pointer hover:bg-[#E25530]/90 transition-all active:scale-98 shadow-md"
+                  className="w-full bg-[#E25530] text-black font-extrabold font-mono border border-[#FF0500] uppercase text-xs sm:text-sm tracking-wider py-2.5 rounded-lg cursor-pointer hover:bg-[#E25530]/90 transition-all active:scale-98 shadow-md"
                 >
                   {t.close}
                 </button>

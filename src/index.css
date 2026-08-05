@@ -65,3 +65,20 @@ input, select, textarea, button, p, span, h1, h2, h3, h4, h5, h6, label, a, opti
 ::-webkit-scrollbar-thumb:hover {
   background: #22c55e;
 }
+
+/* Coordinates modal custom scrollbar */
+.coords-info-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.coords-info-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+}
+.coords-info-scrollbar::-webkit-scrollbar-thumb {
+  background: #E25530;
+  border-radius: 3px;
+}
+.coords-info-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #f1704c;
+}
+

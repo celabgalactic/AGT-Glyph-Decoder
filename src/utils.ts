@@ -52,15 +52,15 @@ export const GLYPH_METADATA_LIST: Record<string, GlyphMetadata> = {
   },
   '7': {
     char: '7',
-    nameEn: 'Dragonfly',
-    nameEs: 'Libélula',
-    desc: 'The Dragonfly or insect glyph, represents lightweight micro-flight.'
-  },
-  '8': {
-    char: '8',
     nameEn: 'Beetle',
     nameEs: 'Escarabajo',
     desc: 'The Beetle key, representing hard-shelled lifeforms.'
+  },
+  '8': {
+    char: '8',
+    nameEn: 'Dragonfly',
+    nameEs: 'Libélula',
+    desc: 'The Dragonfly or insect glyph, represents lightweight micro-flight.'
   },
   '9': {
     char: '9',
