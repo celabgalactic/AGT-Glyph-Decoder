@@ -57,14 +57,38 @@ import {
   generateGlyphs 
 } from './utils';
 import { GalaxyVisualizer3D } from './components/GalaxyVisualizer3D';
+import { jsPDF } from 'jspdf';
 
 const CIVILIZATIONS_CACHE_KEY = 'nms_civilizations_cache';
 const LANGUAGE_CACHE_KEY = 'i18nextLng';
 const FANDOM_API_PATH = 'https://nomanssky.fandom.com/api.php';
 
+const languageFlags: Record<SupportedLanguage, string> = {
+  en: '🇬🇧',
+  es: '🇪🇸',
+  fr: '🇫🇷',
+  de: '🇩🇪',
+  pt: '🇵🇹',
+  it: '🇮🇹',
+  th: '🇹🇭',
+  hi: '🇮🇳',
+  zh: '🇨🇳',
+  ja: '🇯🇵'
+};
+
 interface FavoriteSequence {
   id: string;
   name?: string;
+  sequence: string;
+  galaxy?: string;
+  civilization?: string;
+  region?: string;
+  coordinates?: string;
+  createdAt: string;
+}
+
+interface HistoryItem {
+  id: string;
   sequence: string;
   galaxy?: string;
   civilization?: string;
@@ -180,6 +204,7 @@ const favoritesTranslations: Record<SupportedLanguage, {
   civ: string;
   region: string;
   coords: string;
+  date: string;
 }> = {
   en: {
     title: "Favorites",
@@ -198,7 +223,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "Galaxy",
     civ: "Civ",
     region: "Region",
-    coords: "Coords"
+    coords: "Coords",
+    date: "Date"
   },
   es: {
     title: "Favoritos",
@@ -217,7 +243,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "Galaxia",
     civ: "Civ",
     region: "Región",
-    coords: "Coords"
+    coords: "Coords",
+    date: "Fecha"
   },
   fr: {
     title: "Favoris",
@@ -236,7 +263,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "Galaxie",
     civ: "Civ",
     region: "Région",
-    coords: "Coords"
+    coords: "Coords",
+    date: "Date"
   },
   de: {
     title: "Favoriten",
@@ -255,7 +283,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "Galaxie",
     civ: "Ziv",
     region: "Region",
-    coords: "Koord"
+    coords: "Koord",
+    date: "Datum"
   },
   pt: {
     title: "Favoritos",
@@ -274,7 +303,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "Galáxia",
     civ: "Civ",
     region: "Região",
-    coords: "Coords"
+    coords: "Coords",
+    date: "Data"
   },
   ja: {
     title: "お気に入り",
@@ -293,7 +323,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "銀河",
     civ: "文明",
     region: "領域",
-    coords: "座標"
+    coords: "座標",
+    date: "日付"
   },
   zh: {
     title: "收藏夹",
@@ -312,7 +343,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "星系",
     civ: "文明",
     region: "区域",
-    coords: "坐标"
+    coords: "坐标",
+    date: "日期"
   },
   it: {
     title: "Preferiti",
@@ -331,7 +363,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "Galassia",
     civ: "Civ",
     region: "Regione",
-    coords: "Coord"
+    coords: "Coord",
+    date: "Data"
   },
   th: {
     title: "รายการโปรด",
@@ -350,7 +383,8 @@ const favoritesTranslations: Record<SupportedLanguage, {
     galaxy: "กาแล็กซี",
     civ: "อารยธรรม",
     region: "ภูมิภาค",
-    coords: "พิกัด"
+    coords: "พิกัด",
+    date: "วันที่"
   },
   hi: {
     title: "पसंदीदा",
@@ -366,6 +400,152 @@ const favoritesTranslations: Record<SupportedLanguage, {
     importJson: "JSON आयात करें",
     sort: "क्रमानुसार",
     defaultSort: "डिफ़ॉल्ट",
+    galaxy: "आकाशगंगा",
+    civ: "सभ्यता",
+    region: "क्षेत्र",
+    coords: "निर्देशांक",
+    date: "तारीख"
+  }
+};
+
+const historyTranslations: Record<SupportedLanguage, {
+  title: string;
+  clearAll: string;
+  noHistory: string;
+  exportCSV: string;
+  exportJSON: string;
+  loadTooltip: string;
+  date: string;
+  galaxy: string;
+  civ: string;
+  region: string;
+  coords: string;
+}> = {
+  en: {
+    title: "Past Searches",
+    clearAll: "Clear History",
+    noHistory: "No past searches found.",
+    exportCSV: "Export CSV",
+    exportJSON: "Export JSON",
+    loadTooltip: "Load search",
+    date: "Date",
+    galaxy: "Galaxy",
+    civ: "Civ",
+    region: "Region",
+    coords: "Coords"
+  },
+  es: {
+    title: "Búsquedas Recientes",
+    clearAll: "Borrar Historial",
+    noHistory: "No se encontraron búsquedas recientes.",
+    exportCSV: "Exportar CSV",
+    exportJSON: "Exportar JSON",
+    loadTooltip: "Cargar búsqueda",
+    date: "Fecha",
+    galaxy: "Galaxia",
+    civ: "Civ",
+    region: "Región",
+    coords: "Coords"
+  },
+  fr: {
+    title: "Recherches Récentes",
+    clearAll: "Effacer l'historique",
+    noHistory: "Aucune recherche récente trouvée.",
+    exportCSV: "Exporter CSV",
+    exportJSON: "Exporter JSON",
+    loadTooltip: "Charger la recherche",
+    date: "Date",
+    galaxy: "Galaxie",
+    civ: "Civ",
+    region: "Région",
+    coords: "Coords"
+  },
+  de: {
+    title: "Letzte Suchen",
+    clearAll: "Verlauf löschen",
+    noHistory: "Keine Suchen im Verlauf gefunden.",
+    exportCSV: "CSV exportieren",
+    exportJSON: "JSON exportieren",
+    loadTooltip: "Suche laden",
+    date: "Datum",
+    galaxy: "Galaxie",
+    civ: "Ziv",
+    region: "Region",
+    coords: "Koord"
+  },
+  pt: {
+    title: "Pesquisas Recentes",
+    clearAll: "Limpar Histórico",
+    noHistory: "Nenhuma pesquisa recente encontrada.",
+    exportCSV: "Exportar CSV",
+    exportJSON: "Exportar JSON",
+    loadTooltip: "Carregar pesquisa",
+    date: "Data",
+    galaxy: "Galáxia",
+    civ: "Civ",
+    region: "Região",
+    coords: "Coords"
+  },
+  ja: {
+    title: "検索履歴",
+    clearAll: "履歴をクリア",
+    noHistory: "検索履歴が見つかりません。",
+    exportCSV: "CSVエクスポート",
+    exportJSON: "JSONエクスポート",
+    loadTooltip: "検索を読み込む",
+    date: "日付",
+    galaxy: "銀河",
+    civ: "文明",
+    region: "領域",
+    coords: "座標"
+  },
+  zh: {
+    title: "历史搜索",
+    clearAll: "清除历史",
+    noHistory: "未找到历史搜索记录。",
+    exportCSV: "导出 CSV",
+    exportJSON: "导出 JSON",
+    loadTooltip: "加载搜索",
+    date: "日期",
+    galaxy: "星系",
+    civ: "文明",
+    region: "区域",
+    coords: "坐标"
+  },
+  it: {
+    title: "Ricerche Recenti",
+    clearAll: "Cancella Cronologia",
+    noHistory: "Nessuna ricerca recente trovata.",
+    exportCSV: "Esporta CSV",
+    exportJSON: "Esporta JSON",
+    loadTooltip: "Carica ricerca",
+    date: "Data",
+    galaxy: "Galassia",
+    civ: "Civ",
+    region: "Regione",
+    coords: "Coord"
+  },
+  th: {
+    title: "ประวัติการค้นหา",
+    clearAll: "ล้างประวัติ",
+    noHistory: "ไม่พบประวัติการค้นหา",
+    exportCSV: "ส่งออก CSV",
+    exportJSON: "ส่งออก JSON",
+    loadTooltip: "โหลดการค้นหา",
+    date: "วันที่",
+    galaxy: "กาแล็กซี",
+    civ: "อารยธรรม",
+    region: "ภูมิภาค",
+    coords: "พิกัด"
+  },
+  hi: {
+    title: "खोज इतिहास",
+    clearAll: "इतिहास साफ़ करें",
+    noHistory: "कोई पिछला खोज इतिहास नहीं मिला।",
+    exportCSV: "CSV निर्यात करें",
+    exportJSON: "JSON निर्यात करें",
+    loadTooltip: "खोज लोड करें",
+    date: "तारीख",
     galaxy: "आकाशगंगा",
     civ: "सभ्यता",
     region: "क्षेत्र",
@@ -732,10 +912,120 @@ export default function App() {
       setChangeLogLoading(false);
     }
   };
+
+  const generatePDFChangeLog = () => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const now = new Date();
+    // browser date and time stamp
+    const browserDateTime = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+
+    // Create file date and time stamp for filename
+    const fileDateStr = now.getFullYear() + '-' + 
+                        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                        String(now.getDate()).padStart(2, '0');
+    const fileTimeStr = String(now.getHours()).padStart(2, '0') + '-' + 
+                        String(now.getMinutes()).padStart(2, '0') + '-' + 
+                        String(now.getSeconds()).padStart(2, '0');
+    const fileName = `AGT Glyph Generator Change Log-${fileDateStr}_${fileTimeStr}.pdf`;
+
+    let pageNum = 1;
+
+    const drawHeaderFooter = (docInstance: any, page: number) => {
+      // Header
+      docInstance.setFont('Helvetica', 'normal');
+      docInstance.setFontSize(9);
+      docInstance.setTextColor(120, 120, 120);
+      docInstance.text('AGT Glyph Generator Change Log', 15, 12);
+      docInstance.text(`Page ${page}`, 195, 12, { align: 'right' });
+      
+      // Header divider line
+      docInstance.setDrawColor(220, 220, 220);
+      docInstance.setLineWidth(0.2);
+      docInstance.line(15, 15, 195, 15);
+
+      // Footer divider line
+      docInstance.line(15, 280, 195, 280);
+
+      // Footer
+      docInstance.text(`Created on ${browserDateTime}`, 15, 285);
+    };
+
+    drawHeaderFooter(doc, pageNum);
+
+    let y = 25;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(30, 30, 30);
+    doc.text('AGT Glyph Generator Change Log', 15, y);
+    y += 10;
+
+    changeLogGroups.forEach((group) => {
+      if (y + 15 > 270) {
+        doc.addPage();
+        pageNum++;
+        drawHeaderFooter(doc, pageNum);
+        y = 25;
+      }
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(226, 85, 48); // RGB for #E25530
+      doc.text(group.date, 15, y);
+      y += 6;
+
+      doc.setDrawColor(226, 85, 48);
+      doc.setLineWidth(0.3);
+      doc.line(15, y - 4, 60, y - 4);
+
+      group.changes.forEach((change) => {
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 60);
+
+        const indent = 22;
+        const textWidth = 195 - indent;
+        const lines = doc.splitTextToSize(change, textWidth);
+
+        const blockHeight = lines.length * 5 + 3;
+        if (y + blockHeight > 270) {
+          doc.addPage();
+          pageNum++;
+          drawHeaderFooter(doc, pageNum);
+          y = 25;
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.setTextColor(60, 60, 60);
+        }
+
+        // Bullet point
+        doc.setFont('Helvetica', 'bold');
+        doc.setTextColor(226, 85, 48);
+        doc.text('\u2022', 17, y);
+
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(60, 60, 60);
+        lines.forEach((line: string) => {
+          doc.text(line, indent, y);
+          y += 5;
+        });
+        y += 2;
+      });
+
+      y += 4;
+    });
+
+    doc.save(fileName);
+  };
   const [editingFavId, setEditingFavId] = useState<string | null>(null);
   const [tempFavName, setTempFavName] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'default' | 'galaxy' | 'civilization'>('default');
+  const [sortBy, setSortBy] = useState<'default' | 'galaxy' | 'civilization' | 'date'>('default');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
@@ -920,7 +1210,14 @@ export default function App() {
   // Database Provider & Timestamps State
   const [dbProvider, setDbProvider] = useState<'fandom' | 'agt'>(() => {
     const saved = localStorage.getItem('nms_db_provider');
-    return (saved === 'agt' || saved === 'fandom') ? saved : 'fandom';
+    if (saved === 'agt' || saved === 'fandom') return saved;
+    // Auto-default to 'agt' if no cached databases
+    const fandomCached = localStorage.getItem('nms_civilizations_cache');
+    const agtCached = localStorage.getItem('nms_agt_db_cache');
+    if (!fandomCached && !agtCached) {
+      return 'agt';
+    }
+    return 'fandom';
   });
 
   const [fandomDbLastUpdated, setFandomDbLastUpdated] = useState<string | null>(null);
@@ -1244,6 +1541,80 @@ export default function App() {
     }
   }, [favorites]);
 
+  // History persistence (up to 100 items)
+  const [history, setHistory] = useState<HistoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('agt_nms_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('agt_nms_history', JSON.stringify(history));
+    } catch (e) {
+      console.error('Error persisting history:', e);
+    }
+  }, [history]);
+
+  const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
+  const [historySortBy, setHistorySortBy] = useState<'default' | 'galaxy' | 'civilization' | 'date'>('default');
+  const [historySortOrder, setHistorySortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const addToHistory = (
+    seq: string,
+    coords?: string,
+    galaxy?: string,
+    civ?: string,
+    region?: string
+  ) => {
+    if (!seq || seq === '000000000000') return;
+    const newItem: HistoryItem = {
+      id: String(Date.now() + Math.random()),
+      sequence: seq,
+      coordinates: coords || undefined,
+      galaxy: galaxy || undefined,
+      civilization: civ || undefined,
+      region: region || undefined,
+      createdAt: new Date().toISOString()
+    };
+
+    setHistory(prev => {
+      const filtered = prev.filter(item => item.sequence !== seq);
+      return [newItem, ...filtered].slice(0, 100);
+    });
+  };
+
+  const sortedHistory = useMemo(() => {
+    if (historySortBy === 'default') {
+      return historySortOrder === 'asc' ? [...history].reverse() : [...history];
+    }
+
+    return [...history].sort((a, b) => {
+      if (historySortBy === 'date') {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : Number(a.id || 0);
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : Number(b.id || 0);
+        return historySortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+      }
+
+      let primaryA = '';
+      let primaryB = '';
+
+      if (historySortBy === 'galaxy') {
+        primaryA = a.galaxy || '';
+        primaryB = b.galaxy || '';
+      } else if (historySortBy === 'civilization') {
+        primaryA = a.civilization || '';
+        primaryB = b.civilization || '';
+      }
+
+      const comparison = primaryA.localeCompare(primaryB);
+      return historySortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [history, historySortBy, historySortOrder]);
+
   const currentSequence = useMemo(() => {
     return rollSymbols.join('').toUpperCase();
   }, [rollSymbols]);
@@ -1346,6 +1717,86 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const clearAllHistory = () => {
+    setHistory([]);
+  };
+
+  const exportHistoryCSV = () => {
+    if (history.length === 0) return;
+    const headers = ['Sequence', 'Galaxy', 'Civilization', 'Region', 'Coordinates', 'CreatedAt'];
+    const escapeCSV = (str: string) => {
+      if (!str) return '""';
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return `"${str}"`;
+    };
+
+    const rows = history.map(h => [
+      h.sequence || '',
+      h.galaxy || '',
+      h.civilization || '',
+      h.region || '',
+      h.coordinates || '',
+      h.createdAt || ''
+    ]);
+
+    const csvContent = [
+      headers.map(escapeCSV).join(','),
+      ...rows.map(row => row.map(escapeCSV).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `nms_history_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportHistoryJSON = () => {
+    if (history.length === 0) return;
+    const dataStr = JSON.stringify(history, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `nms_history_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const loadHistoryItem = (item: HistoryItem) => {
+    if (isRolling) return;
+    setRollSymbols(item.sequence.split(''));
+    setGeneratedCode(item.sequence);
+    setRevealedCount(12);
+
+    if (item.coordinates) {
+      setManualCoordinates(item.coordinates);
+      setGlyphInput(item.sequence);
+    }
+    if (item.galaxy) {
+      setSelectedGalaxy(item.galaxy);
+      setGalaxySearchInput(item.galaxy);
+    }
+    if (item.civilization) {
+      setSelectedCivilization(item.civilization);
+      setCivSearchInput(item.civilization);
+    }
+    if (item.region && item.coordinates) {
+      setSelectedRegion(item.coordinates);
+    } else {
+      setSelectedRegion('');
+    }
+    setShowHistoryModal(false);
+  };
+
   const handleImportJSON = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1423,6 +1874,12 @@ export default function App() {
     }
 
     return [...favorites].sort((a, b) => {
+      if (sortBy === 'date') {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : Number(a.id || 0);
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : Number(b.id || 0);
+        return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+      }
+
       let primaryA = '';
       let primaryB = '';
 
@@ -1733,7 +2190,15 @@ export default function App() {
           setAgtDbLastUpdatedRaw(agtCacheTimeRaw || null);
         }
 
-        const currentProvider = (localStorage.getItem('nms_db_provider') as 'fandom' | 'agt') || 'fandom';
+        // If there is no cached database at all, auto-default to download the AGT Region database
+        const hasNoCachedDb = !fandomDbObj && !agtDbObj;
+        let currentProvider = localStorage.getItem('nms_db_provider') as 'fandom' | 'agt';
+        if (hasNoCachedDb) {
+          currentProvider = 'agt';
+          localStorage.setItem('nms_db_provider', 'agt');
+        } else if (!currentProvider) {
+          currentProvider = 'fandom';
+        }
         setDbProvider(currentProvider);
 
         if (currentProvider === 'agt') {
@@ -1764,6 +2229,52 @@ export default function App() {
       }
     }
     initDb();
+  }, []);
+
+  // Parse parameters from the URL on mount to pre-fill inputs
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const galaxyParam = urlParams.get('galaxy') || urlParams.get('galaxyName') || urlParams.get('g');
+      const coordsParam = urlParams.get('coords') || urlParams.get('coordinates') || urlParams.get('c');
+      const glyphsParam = urlParams.get('glyphs') || urlParams.get('glyph') || urlParams.get('sequence') || urlParams.get('s');
+
+      if (galaxyParam) {
+        const trimmed = galaxyParam.trim();
+        const formattedGalaxy = trimmed.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+        setSelectedGalaxy(formattedGalaxy);
+      }
+
+      if (coordsParam) {
+        const cleanCoords = coordsParam.trim().toUpperCase();
+        setManualCoordinates(cleanCoords);
+        setConversionSectionFolded(false);
+        if (cleanCoords.split(':').length === 4) {
+          const converted = coords2Glyphs(cleanCoords, selectedPlanet);
+          if (converted) {
+            setGlyphInput(converted);
+          }
+        }
+      } else if (glyphsParam) {
+        const cleanGlyphs = validateGlyphInput(glyphsParam.trim().toUpperCase());
+        setGlyphInput(cleanGlyphs);
+        setConversionSectionFolded(false);
+        if (cleanGlyphs.length > 0) {
+          const pHex = parseInt(cleanGlyphs[0], 16);
+          if (pHex >= 1 && pHex <= 6) {
+            setSelectedPlanet(pHex);
+          }
+        }
+        if (cleanGlyphs.length === 12) {
+          const reversedCoords = glyphs2Coords(cleanGlyphs);
+          if (reversedCoords) {
+            setManualCoordinates(reversedCoords);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing URL params:', err);
+    }
   }, []);
 
   // Update dropdown selection filters
@@ -1899,6 +2410,8 @@ export default function App() {
       setManualCoordinates(reversedCoords);
     }
 
+    addToHistory(targetCode, reversedCoords || undefined, selectedGalaxy || undefined, selectedCivilization || undefined, selectedRegion || undefined);
+
     setIsRolling(true);
     setGeneratedCode(targetCode);
     setRevealedCount(0);
@@ -1950,7 +2463,7 @@ export default function App() {
     if (isRolling) return;
     
     // Compute targeted 12-digit code
-    const targetCode = generateGlyphs(glyphInput);
+    const targetCode = generateGlyphs(glyphInput, true);
     if (!targetCode) {
       alert(t.fullportalcode);
       return;
@@ -1960,6 +2473,8 @@ export default function App() {
     if (reversedCoords) {
       setManualCoordinates(reversedCoords);
     }
+
+    addToHistory(targetCode, reversedCoords || undefined, selectedGalaxy || undefined, selectedCivilization || undefined, selectedRegion || undefined);
 
     setIsRolling(true);
     setGeneratedCode(targetCode);
@@ -2262,6 +2777,115 @@ export default function App() {
     return currentCivsList.filter(c => c.toLowerCase().includes(term));
   }, [civSearchInput, currentCivsList]);
 
+  // Check if we are in embedded iframe mode
+  const embedUrlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const embedParamVal = embedUrlParams.get('embed');
+  const isEmbedMode = embedParamVal !== null && embedParamVal !== 'false' && embedParamVal !== '0';
+
+  if (isEmbedMode) {
+    const embedGalaxyRaw = embedUrlParams.get('galaxy') || embedUrlParams.get('galaxyName') || embedUrlParams.get('g');
+    const embedGalaxy = embedGalaxyRaw ? embedGalaxyRaw.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ') : 'Euclid';
+
+    const embedCoordsRaw = embedUrlParams.get('coords') || embedUrlParams.get('coordinates') || embedUrlParams.get('c');
+    const embedGlyphsRaw = embedUrlParams.get('glyphs') || embedUrlParams.get('glyph') || embedUrlParams.get('sequence') || embedUrlParams.get('s');
+
+    let embedError = '';
+    let embedMathGuide: { x: number; y: number; z: number } | null = null;
+
+    if (embedCoordsRaw) {
+      const cleanCoords = embedCoordsRaw.trim().toUpperCase();
+      const parts = cleanCoords.split(':');
+      if (parts.length === 3) {
+        parts.push('0000');
+      }
+      if (parts.length === 4) {
+        const x = parseInt(parts[0], 16);
+        const y = parseInt(parts[1], 16);
+        const z = parseInt(parts[2], 16);
+        if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+          embedMathGuide = { x, y, z };
+        } else {
+          embedError = 'Invalid Coordinates or Glyphs Received.';
+        }
+      } else {
+        embedError = 'Invalid Coordinates or Glyphs Received.';
+      }
+    } else if (embedGlyphsRaw) {
+      const cleanGlyphs = embedGlyphsRaw.trim().toUpperCase().replace(/[^0-9A-F]/g, '');
+      if (cleanGlyphs.length === 12) {
+        const reversedCoords = glyphs2Coords(cleanGlyphs);
+        if (reversedCoords) {
+          const parts = reversedCoords.split(':');
+          if (parts.length === 4) {
+            const x = parseInt(parts[0], 16);
+            const y = parseInt(parts[1], 16);
+            const z = parseInt(parts[2], 16);
+            if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+              embedMathGuide = { x, y, z };
+            } else {
+              embedError = 'Invalid Coordinates or Glyphs Received.';
+            }
+          } else {
+            embedError = 'Invalid Coordinates or Glyphs Received.';
+          }
+        } else {
+          embedError = 'Invalid Coordinates or Glyphs Received.';
+        }
+      } else {
+        embedError = 'Invalid Coordinates or Glyphs Received.';
+      }
+    } else {
+      embedError = 'Invalid Coordinates or Glyphs Received.';
+    }
+
+    if (embedError) {
+      return (
+        <div className="w-full h-screen bg-[#050505] text-[#FFB451] flex flex-col items-center justify-center p-4 font-mono text-center border border-[#FF0500]/45 overflow-hidden select-none">
+          <div className="max-w-md w-full bg-zinc-950/95 border border-[#FF0500] rounded-xl p-5 shadow-2xl space-y-4">
+            <div className="text-[#FF0500] font-extrabold text-sm sm:text-base tracking-wider uppercase mb-1 flex items-center justify-center gap-1.5 animate-pulse">
+              ⚠️ {embedError}
+            </div>
+            <div className="border-t border-zinc-900 pt-3 text-left space-y-2 text-xs">
+              <div className="flex justify-between gap-4">
+                <span className="text-zinc-500 uppercase tracking-wider text-[10px]">Galaxy Name:</span>
+                <span className="text-[#FFB451] font-bold">{embedGalaxy}</span>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-zinc-900/40 pt-1.5">
+                <span className="text-zinc-500 uppercase tracking-wider text-[10px]">Coordinates:</span>
+                <span className="text-[#FFB451] font-bold font-mono text-right truncate max-w-[200px]" title={embedCoordsRaw || 'None'}>
+                  {embedCoordsRaw || 'None'}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-zinc-900/40 pt-1.5">
+                <span className="text-zinc-500 uppercase tracking-wider text-[10px]">Glyphs:</span>
+                <span className="text-[#FFB451] font-bold font-mono text-right truncate max-w-[200px]" title={embedGlyphsRaw || 'None'}>
+                  {embedGlyphsRaw || 'None'}
+                </span>
+              </div>
+            </div>
+            <p className="text-[9px] text-zinc-600 mt-2 italic leading-relaxed text-center">
+              Please provide a valid galaxy name and a 4-part colon-separated coordinate string or a 12-character glyph sequence.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-full h-screen bg-[#050505] overflow-hidden flex flex-col p-1">
+        <div className="flex-1 min-h-0 relative">
+          {embedMathGuide && (
+            <GalaxyVisualizer3D 
+              coordinates={embedMathGuide} 
+              galaxyName={embedGalaxy} 
+              lang={lang} 
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen font-sans bg-[#050505] selection:bg-green-500/30 selection:text-green-400">
       {scaleStyleStyle}
@@ -2363,8 +2987,19 @@ export default function App() {
       {/* Main Container body */}
       <main className="relative z-10 max-w-5xl mx-auto px-4 mt-8 pb-12">
         
-        {/* Upper right hand of the display, after the header - small button "Favorites" */}
-        <div className="flex justify-end mb-4">
+        {/* Upper right hand of the display, after the header - small button "History" and "Favorites" */}
+        <div className="flex justify-end gap-2 mb-4">
+          <button
+            id="history-modal-trigger"
+            onClick={() => {
+              setShowHistoryModal(true);
+            }}
+            className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold py-1 px-3 rounded-md transition-all cursor-pointer font-mono uppercase tracking-wider shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>{(historyTranslations[lang] || historyTranslations.en).title}</span>
+          </button>
+
           <button
             id="favorites-modal-trigger"
             onClick={() => {
@@ -3009,7 +3644,7 @@ export default function App() {
                                       }
                                       
                                       // Trigger roll directly
-                                      const targetCode = generateGlyphs(glyphs || '');
+                                      const targetCode = generateGlyphs(glyphs || '', true);
                                       if (targetCode) {
                                         const reversedCoords = glyphs2Coords(targetCode);
                                         if (reversedCoords) {
@@ -3020,6 +3655,8 @@ export default function App() {
                                         if (matchingGalaxyValue) {
                                           setSelectedGalaxy(matchingGalaxyValue);
                                         }
+
+                                        addToHistory(targetCode, reversedCoords || matchingCoordsValue || undefined, matchingGalaxyValue || selectedGalaxy || undefined, selectedCivilization || undefined, selectedRegion || undefined);
 
                                         setIsRolling(true);
                                         setGeneratedCode(targetCode);
@@ -3088,22 +3725,22 @@ export default function App() {
               {/* Portal output show display screen */}
               <div 
                 id="portalResultsBox"
-                className="w-full bg-zinc-950/80 border border-[#E25530] rounded-xl p-6 shadow-xl flex flex-col items-center animate-fade-in"
+                className={`w-full bg-zinc-950/80 border border-[#E25530] rounded-xl shadow-xl flex flex-col items-center animate-fade-in ${glyphTooltipsEnabled ? 'p-6' : 'p-4 pb-3'}`}
                 style={{ fontFamily: '"NMS-Glyphs-Mono", monospace' }}
               >
                 
-                <h3 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest mb-4">
+                <h3 className={`text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest ${glyphTooltipsEnabled ? 'mb-4' : 'mb-2'}`}>
                   {t.portalSignalSpectrumTitle}
                 </h3>
 
                 {/* Simulated Portal glyph ring board */}
-                <div className="w-full bg-zinc-900/40 border border-zinc-900 rounded-lg p-4 flex flex-col items-center gap-4 relative overflow-hidden">
+                <div className={`w-full bg-zinc-900/40 border border-zinc-900 rounded-lg flex flex-col items-center relative overflow-hidden ${glyphTooltipsEnabled ? 'p-4 gap-4' : 'p-3 gap-2.5'}`}>
                   
                   {/* Decorative glowing scanline */}
                   <div className="absolute inset-x-0 top-0 h-[2px] bg-green-500/20 shadow-[0_0_12px_#22c55e] animate-bounce pointer-events-none" />
 
                   {/* Icon Glyphs rendered in the special loaded TTF font */}
-                  <div className="grid grid-cols-6 gap-1.5 md:flex md:flex-wrap md:justify-center py-6 font-glyphs text-4xl md:text-5xl text-green-500 justify-items-center">
+                  <div className={`grid grid-cols-6 gap-1.5 md:flex md:flex-wrap md:justify-center font-glyphs text-4xl md:text-5xl text-green-500 justify-items-center ${glyphTooltipsEnabled ? 'py-6' : 'py-3'}`}>
                     {rollSymbols.map((sym, index) => {
                       const isSlotSpinning = isRolling && revealedCount <= index;
                       return (
@@ -3225,30 +3862,32 @@ export default function App() {
                   </div>
 
                   {/* Glyph translation & mythos inside the Portal Signal Spectrum Panel */}
-                  <div className="w-full mt-3 text-[#FFB451] font-mono self-stretch" style={{ fontFamily: '"geonms-font", sans-serif' }}>
-                    {hoveredGlyph && glyphTranslations[lang] && glyphTranslations[lang][hoveredGlyph] ? (
-                      <motion.div 
-                        key={hoveredGlyph}
-                        initial={{ opacity: 0, y: 3 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-zinc-900/45 p-3 rounded-lg border border-zinc-900/60"
-                      >
-                        <div className="flex items-center justify-between font-bold mb-1 pb-1">
-                          <span className="text-[#FFB451] uppercase tracking-wider text-[11px] sm:text-xs font-extrabold font-mono">
-                            GLYPH #{hoveredGlyph} : {glyphTranslations[lang][hoveredGlyph].name}
-                          </span>
-                          <span className="font-glyphs text-base text-[#FFB451]">{hoveredGlyph.toUpperCase()}</span>
+                  {glyphTooltipsEnabled && (
+                    <div className="w-full mt-3 text-[#FFB451] font-mono self-stretch animate-fade-in" style={{ fontFamily: '"geonms-font", sans-serif' }}>
+                      {hoveredGlyph && glyphTranslations[lang] && glyphTranslations[lang][hoveredGlyph] ? (
+                        <motion.div 
+                          key={hoveredGlyph}
+                          initial={{ opacity: 0, y: 3 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-zinc-900/45 p-3 rounded-lg border border-zinc-900/60"
+                        >
+                          <div className="flex items-center justify-between font-bold mb-1 pb-1">
+                            <span className="text-[#FFB451] uppercase tracking-wider text-[11px] sm:text-xs font-extrabold font-mono">
+                              GLYPH #{hoveredGlyph} : {glyphTranslations[lang][hoveredGlyph].name}
+                            </span>
+                            <span className="font-glyphs text-base text-[#FFB451]">{hoveredGlyph.toUpperCase()}</span>
+                          </div>
+                          <p className="text-[#FFB451]/95 text-xs sm:text-sm leading-relaxed font-sans">
+                            {glyphTranslations[lang][hoveredGlyph].desc}
+                          </p>
+                        </motion.div>
+                      ) : (
+                        <div className="text-[#FFB451]/75 text-xs text-center p-3 bg-zinc-900/15 rounded-lg border border-zinc-900/40 font-mono leading-relaxed">
+                          {t.glyphHoverInstructions}
                         </div>
-                        <p className="text-[#FFB451]/95 text-xs sm:text-sm leading-relaxed font-sans">
-                          {glyphTranslations[lang][hoveredGlyph].desc}
-                        </p>
-                      </motion.div>
-                    ) : (
-                      <div className="text-[#FFB451]/75 text-xs text-center p-3 bg-zinc-900/15 rounded-lg border border-zinc-900/40 font-mono leading-relaxed">
-                        {t.glyphHoverInstructions}
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
 
                 </div>
 
@@ -3370,7 +4009,7 @@ export default function App() {
               <div className="flex items-center justify-between border-b border-[#FF0500] pb-3 text-[#FFB451]">
                 <div className="flex items-center gap-2">
                   <Settings className="w-5 h-5 text-[#FF0500]" style={{ color: '#FF0500' }} />
-                  <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
+                  <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-white">
                     {t.settingsTitle}
                   </span>
                 </div>
@@ -3382,15 +4021,15 @@ export default function App() {
                       fetchChangeLog();
                     }}
                     title={t.changeLog}
-                    className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
+                    className="p-1.5 border border-[#E25530] bg-transparent rounded hover:bg-zinc-900 transition-colors cursor-pointer flex items-center justify-center"
                   >
-                    <FileText className="w-4 h-4 text-black" />
+                    <FileText className="w-4 h-4 text-[#FFB451]" style={{ color: '#FFB451' }} />
                   </button>
                   <button 
                     onClick={() => setShowSettings(false)}
-                    className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
+                    className="p-1.5 border border-[#E25530] bg-transparent rounded hover:bg-zinc-900 transition-colors cursor-pointer flex items-center justify-center"
                   >
-                    <X className="w-4 h-4 text-black font-bold" />
+                    <X className="w-4 h-4 text-white font-bold" style={{ color: '#ffffff' }} />
                   </button>
                 </div>
               </div>
@@ -3408,10 +4047,16 @@ export default function App() {
                       value={lang} 
                       onChange={handleLanguageChange}
                       className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-2.5 text-sm font-bold text-[#FFB451] focus:outline-none cursor-pointer"
+                      style={{ fontFamily: '"Twemoji Country Flags", "geonms-font", sans-serif' }}
                     >
                       {Object.keys(translations).map((l) => (
-                        <option key={l} value={l} className="bg-zinc-950 text-[#FFB451]">
-                          {languageNames[l as SupportedLanguage]}
+                        <option 
+                          key={l} 
+                          value={l} 
+                          className="bg-zinc-950 text-[#FFB451]"
+                          style={{ fontFamily: '"Twemoji Country Flags", "geonms-font", sans-serif' }}
+                        >
+                          {languageFlags[l as SupportedLanguage]} {languageNames[l as SupportedLanguage]}
                         </option>
                       ))}
                     </select>
@@ -3737,12 +4382,22 @@ export default function App() {
                   <span>{t.refreshLog}</span>
                 </button>
 
-                <button
-                  onClick={() => setShowChangeLogModal(false)}
-                  className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
-                >
-                  {t.close}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={generatePDFChangeLog}
+                    disabled={changeLogLoading || changeLogGroups.length === 0}
+                    className="bg-zinc-900 text-[#FFB451] hover:bg-zinc-800 border border-[#E25530] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:text-white transition-all duration-150 cursor-pointer disabled:opacity-40"
+                  >
+                    PDF Change Log
+                  </button>
+
+                  <button
+                    onClick={() => setShowChangeLogModal(false)}
+                    className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
+                  >
+                    {t.close}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -3965,6 +4620,28 @@ export default function App() {
                     >
                       <span>{(favoritesTranslations[lang] || favoritesTranslations.en).civ}</span>
                       {sortBy === 'civilization' && (
+                        sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (sortBy === 'date') {
+                          setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setSortBy('date');
+                          setSortOrder('desc');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                        sortBy === 'date'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                      title="Sort by Creation Date"
+                    >
+                      <span>{(favoritesTranslations[lang] || favoritesTranslations.en).date}</span>
+                      {sortBy === 'date' && (
                         sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
                       )}
                     </button>
@@ -4237,6 +4914,297 @@ export default function App() {
                   className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
                 >
                   {(favoritesTranslations[lang] || favoritesTranslations.en).close}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Search History Pop-up Dialog Modal */}
+      <AnimatePresence>
+        {showHistoryModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full max-w-xl bg-zinc-950 border-2 border-zinc-800 rounded-xl p-6 shadow-[0_0_50px_rgba(255,255,255,0.05)] space-y-4 text-[#FFB451] flex flex-col max-h-[90vh]"
+            >
+              {/* Header section with icon, title, and close */}
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3 text-[#FFB451] shrink-0">
+                <div className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-green-500" />
+                  <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
+                    {(historyTranslations[lang] || historyTranslations.en).title}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowHistoryModal(false);
+                  }}
+                  className="p-1.5 rounded hover:bg-zinc-900 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Controls Bar: Sort options & Data Export */}
+              <div className="bg-zinc-900/70 border border-zinc-800 rounded-lg p-2.5 space-y-2 shrink-0 text-xs font-mono">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* Sort Group */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px] mr-1">
+                      {(historyTranslations[lang] || historyTranslations.en).coords || "Sort"}:
+                    </span>
+                    
+                    <button
+                      onClick={() => {
+                        setHistorySortBy('default');
+                        setHistorySortOrder('desc');
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                        historySortBy === 'default'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                    >
+                      Default
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (historySortBy === 'galaxy') {
+                          setHistorySortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setHistorySortBy('galaxy');
+                          setHistorySortOrder('asc');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                        historySortBy === 'galaxy'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                      title="Sort by Galaxy"
+                    >
+                      <span>{(historyTranslations[lang] || historyTranslations.en).galaxy}</span>
+                      {historySortBy === 'galaxy' && (
+                        historySortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (historySortBy === 'civilization') {
+                          setHistorySortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setHistorySortBy('civilization');
+                          setHistorySortOrder('asc');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                        historySortBy === 'civilization'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                      title="Sort by Civilization"
+                    >
+                      <span>{(historyTranslations[lang] || historyTranslations.en).civ}</span>
+                      {historySortBy === 'civilization' && (
+                        historySortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (historySortBy === 'date') {
+                          setHistorySortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setHistorySortBy('date');
+                          setHistorySortOrder('desc');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                        historySortBy === 'date'
+                          ? 'bg-[#E25530] text-white border border-[#E25530]'
+                          : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                      }`}
+                      title="Sort by Date"
+                    >
+                      <span>{(historyTranslations[lang] || historyTranslations.en).date}</span>
+                      {historySortBy === 'date' && (
+                        historySortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </button>
+
+                    {/* Explicit direction toggle */}
+                    <button
+                      onClick={() => setHistorySortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                      className="px-2 py-1 rounded text-[10px] font-bold bg-zinc-950 border border-zinc-800 text-zinc-300 hover:text-white flex items-center gap-1 cursor-pointer"
+                      title={`Toggle Direction`}
+                    >
+                      <ArrowUpDown className="w-3 h-3 text-[#FFB451]" />
+                      <span className="uppercase text-[9px]">{historySortOrder}</span>
+                    </button>
+                  </div>
+
+                  {/* Export Action Group */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={exportHistoryCSV}
+                      disabled={history.length === 0}
+                      className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[#FFB451] hover:text-white text-[10px] font-bold px-2 py-1 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Download CSV file"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-green-500" />
+                      <span>CSV</span>
+                    </button>
+
+                    <button
+                      onClick={exportHistoryJSON}
+                      disabled={history.length === 0}
+                      className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[#FFB451] hover:text-white text-[10px] font-bold px-2 py-1 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Export JSON file"
+                    >
+                      <FileJson className="w-3.5 h-3.5 text-green-500" />
+                      <span>{(historyTranslations[lang] || historyTranslations.en).exportJSON}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scrollable History List */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3 min-h-0 py-2">
+                {sortedHistory.length === 0 ? (
+                  <p className="text-zinc-500 text-xs font-mono text-center py-8 select-none">
+                    {(historyTranslations[lang] || historyTranslations.en).noHistory}
+                  </p>
+                ) : (
+                  sortedHistory.map((item) => {
+                    const histT = historyTranslations[lang] || historyTranslations.en;
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          loadHistoryItem(item);
+                        }}
+                        className="group bg-zinc-900/40 hover:bg-green-500/10 border border-zinc-800 hover:border-green-500/40 rounded-lg p-3 cursor-pointer transition-all duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left relative overflow-hidden"
+                      >
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          {/* Visual Glyph rendering */}
+                          <div className="flex gap-0.5 font-glyphs text-xl text-green-500 overflow-x-auto whitespace-nowrap scrollbar-none">
+                            {item.sequence.split('').map((char, index) => (
+                              <span key={index} className="font-glyphs select-none">{char}</span>
+                            ))}
+                          </div>
+
+                          {/* Monospace code sequence */}
+                          <div className="font-mono text-[11px] font-bold tracking-widest text-[#FFB451]/95">
+                            {item.sequence}
+                          </div>
+
+                          {/* Metadata labels if present */}
+                          {(item.galaxy || item.civilization || item.region || item.coordinates) && (
+                            <div className="space-y-0.5 text-[10px] font-mono text-zinc-400 leading-tight">
+                              {item.galaxy && (
+                                <div>
+                                  <span className="text-zinc-500 uppercase font-bold mr-1">{histT.galaxy}:</span>
+                                  <span className="text-zinc-300">{item.galaxy}</span>
+                                </div>
+                              )}
+                              {item.civilization && (
+                                <div>
+                                  <span className="text-zinc-500 uppercase font-bold mr-1">{histT.civ}:</span>
+                                  <span className="text-zinc-300">{item.civilization}</span>
+                                </div>
+                              )}
+                              {item.region && (
+                                <div className="truncate">
+                                  <span className="text-zinc-500 uppercase font-bold mr-1">{histT.region}:</span>
+                                  <span className="text-zinc-300">{item.region}</span>
+                                </div>
+                              )}
+                              {item.coordinates && (
+                                <div>
+                                  <span className="text-zinc-500 uppercase font-bold mr-1">{histT.coords}:</span>
+                                  <span className="text-[#E25530] font-bold">{item.coordinates}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Time tag */}
+                          <div className="text-[9px] text-zinc-600 font-mono">
+                            {new Date(item.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+
+                        {/* Action Buttons (Copy, Load) */}
+                        <div className="flex sm:flex-col items-center gap-2 self-end sm:self-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <motion.button
+                            onClick={(e) => handleCopy(item.id, item.sequence, e)}
+                            animate={copiedId === item.id ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                            transition={{ duration: 0.2 }}
+                            className={`p-1.5 rounded cursor-pointer transition-all duration-300 relative border ${
+                              copiedId === item.id
+                                ? 'bg-emerald-950/80 border-emerald-500/80 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                                : 'bg-zinc-950/80 border-zinc-900 text-zinc-400 hover:text-green-400 hover:border-green-500/30'
+                            }`}
+                            title={copiedId === item.id ? "Copied" : "Copy"}
+                          >
+                            <AnimatePresence mode="wait" initial={false}>
+                              {copiedId === item.id ? (
+                                <motion.div
+                                  key="check"
+                                  initial={{ scale: 0.6, rotate: -15, opacity: 0 }}
+                                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                                  exit={{ scale: 0.6, opacity: 0 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key="copy"
+                                  initial={{ scale: 0.8, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  exit={{ scale: 0.8, opacity: 0 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer section with clear all option */}
+              <div className="border-t border-zinc-900 pt-3 flex items-center justify-between shrink-0">
+                {history.length > 0 ? (
+                  <button
+                    onClick={clearAllHistory}
+                    className="text-[10px] font-bold font-mono text-red-500 hover:text-red-400 underline uppercase tracking-widest cursor-pointer"
+                  >
+                    {(historyTranslations[lang] || historyTranslations.en).clearAll}
+                  </button>
+                ) : (
+                  <span />
+                )}
+                <button
+                  onClick={() => {
+                    setShowHistoryModal(false);
+                  }}
+                  className="bg-zinc-900 text-[#FFB451] border border-zinc-800 hover:bg-zinc-800 font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded transition-all duration-150 cursor-pointer"
+                >
+                  Close
                 </button>
               </div>
             </motion.div>

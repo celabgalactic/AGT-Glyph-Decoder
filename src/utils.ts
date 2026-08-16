@@ -207,12 +207,19 @@ export function glyphs2Coords(glyphs: string): string {
   return `${xHex}:${yHex}:${zHex}:${sHex}`;
 }
 
-export function generateGlyphs(regionInput: string): string {
+export function generateGlyphs(regionInput: string, limitSSS: boolean = false): string {
   const cleanInput = regionInput.trim().toUpperCase();
-  let glyphs = "0";
+  let glyphs = (cleanInput.length >= 1 && VALID_PORTAL_KEYS.includes(cleanInput[0])) ? cleanInput[0] : "1";
 
-  for (let i = 1; i <= 3; i++) {
-    glyphs += randomGlyph();
+  if (limitSSS) {
+    // Generate SSS between 1 and 216 (0x01 to 0xD8)
+    const randomVal = Math.floor(Math.random() * 216) + 1;
+    const sssHex = randomVal.toString(16).toUpperCase().padStart(3, '0');
+    glyphs += sssHex;
+  } else {
+    for (let i = 1; i <= 3; i++) {
+      glyphs += randomGlyph();
+    }
   }
 
   if (cleanInput.length >= 12) {
