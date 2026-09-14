@@ -184,7 +184,7 @@ export const translations: Record<SupportedLanguage, TranslationSet> = {
     agtDbLastUpdated: "AGT DB Last Updated",
     fandomDbLastUpdated: "Fandom DB Last Updated",
     changeLog: "Change Log",
-    appChangeLogTitle: "App Change Log",
+    appChangeLogTitle: "Change Log",
     refreshLog: "Refresh Log",
     dbSelectionLabel: "Database Selection",
     fandom: "Fandom",

@@ -37,7 +37,10 @@ import {
   ArrowDown,
   ArrowUpDown,
   FileText,
-  History
+  FileDown,
+  History,
+  Keyboard,
+  CornerDownLeft
 } from 'lucide-react';
 import { 
   DatabaseState, 
@@ -1235,6 +1238,9 @@ export default function App() {
   const [selectedGalaxy, setSelectedGalaxy] = useState<string>('');
   const [selectedCivilization, setSelectedCivilization] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<string>(''); // Holds coordinates or blank
+  // Active tool panel on main page ('convert' | 'region' | 'claim')
+  // Default on app load is 'convert' ("Convert Coordinates/Glyphs")
+  const [activeToolPanel, setActiveToolPanel] = useState<'convert' | 'region' | 'claim'>('convert');
   const [regionSectionFolded, setRegionSectionFolded] = useState<boolean>(true);
   
   // Custom manual coordinates input vs manual glyph inputs
@@ -1253,6 +1259,8 @@ export default function App() {
   const [claimGalaxyInput, setClaimGalaxyInput] = useState<string>('Euclid');
   const [claimCoordsOrGlyphsInput, setClaimCoordsOrGlyphsInput] = useState<string>('');
   const [claimRegionInput, setClaimRegionInput] = useState<string>('');
+  const claimInputRef = useRef<HTMLInputElement>(null);
+  const ghostOverlayRef = useRef<HTMLDivElement>(null);
   const [showClaimSuggestions, setShowClaimSuggestions] = useState<boolean>(false);
   const [showClaimPopup, setShowClaimPopup] = useState<boolean>(false);
   const [claimPopupTitle, setClaimPopupTitle] = useState<string>('');
@@ -1314,13 +1322,49 @@ export default function App() {
     return Array.from(namesSet).sort();
   }, [database]);
 
-  // Filter claim check region list based on user input
+  // Predictive text auto-fill calculation for claim region input
+  const { predictedRegion, predictedSuffix } = useMemo(() => {
+    if (!claimRegionInput) {
+      return { predictedRegion: null, predictedSuffix: '' };
+    }
+    const inputLower = claimRegionInput.toLowerCase();
+    
+    // Find matching regions where name starts with input (case-insensitive) and is longer than current input
+    const prefixMatches = allRegionNames.filter(name =>
+      name.toLowerCase().startsWith(inputLower) &&
+      name.length > claimRegionInput.length
+    );
+
+    if (prefixMatches.length > 0) {
+      // Sort by length first to prefer the shortest/most direct match, then alphabetically
+      prefixMatches.sort((a, b) => a.length - b.length || a.localeCompare(b));
+      const bestMatch = prefixMatches[0];
+      const suffix = bestMatch.slice(claimRegionInput.length);
+      return { predictedRegion: bestMatch, predictedSuffix: suffix };
+    }
+
+    return { predictedRegion: null, predictedSuffix: '' };
+  }, [claimRegionInput, allRegionNames]);
+
+  // Filter claim check region list based on user input, ordering prefix matches first
   const filteredClaimRegions = useMemo<string[]>(() => {
-    if (!claimRegionInput.trim()) return [];
-    const searchLower = claimRegionInput.toLowerCase();
-    return allRegionNames
-      .filter(name => name.toLowerCase().includes(searchLower))
-      .slice(0, 10);
+    const trimmed = claimRegionInput.trim();
+    if (!trimmed) return [];
+    const searchLower = trimmed.toLowerCase();
+    
+    const prefixMatches: string[] = [];
+    const containsMatches: string[] = [];
+
+    for (const name of allRegionNames) {
+      const lower = name.toLowerCase();
+      if (lower.startsWith(searchLower)) {
+        prefixMatches.push(name);
+      } else if (lower.includes(searchLower)) {
+        containsMatches.push(name);
+      }
+    }
+
+    return [...prefixMatches, ...containsMatches].slice(0, 10);
   }, [claimRegionInput, allRegionNames]);
 
   // Global database search to find a region and retrieve its info by Name
@@ -3014,7 +3058,7 @@ export default function App() {
         </div>
         
         {/* Animated Headline */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-6">
           <motion.h1 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -3023,63 +3067,118 @@ export default function App() {
             <span className="block md:hidden">Glyph Generator</span>
             <span className="hidden md:block">AGT NMS {t.glyphGenerator}</span>
           </motion.h1>
+
+          {/* Three Function Buttons in the line after AGT NMS Glyph Generator */}
+          <div 
+            id="toolFunctionButtonsBar" 
+            className="flex flex-row items-center justify-center gap-1.5 sm:gap-3 max-w-4xl mx-auto px-1 sm:px-2 mt-4 w-full"
+            role="tablist"
+            aria-label="Tool Panels"
+          >
+            <button
+              id="btnConvertCoordsGlyphs"
+              type="button"
+              role="tab"
+              title="Convert Coordinates/Glyphs"
+              aria-selected={activeToolPanel === 'convert'}
+              onClick={() => setActiveToolPanel('convert')}
+              className={`group flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1.5 py-2 sm:px-5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-[10.5px] xs:text-xs sm:text-sm uppercase tracking-tight sm:tracking-wider font-mono whitespace-nowrap transition-all duration-200 cursor-pointer select-none active:scale-95 ${
+                activeToolPanel === 'convert'
+                  ? 'bg-[#E25530] text-black border-2 border-[#FF0500] shadow-[0_0_15px_rgba(226,85,48,0.45)]'
+                  : 'bg-zinc-950/80 hover:bg-zinc-900 border border-[#FF0500]/50 hover:border-[#FFB451] text-[#FFB451]'
+              }`}
+            >
+              <Layers className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform group-hover:scale-110 ${activeToolPanel === 'convert' ? 'text-black' : 'text-[#FFB451]'}`} />
+              <span>Convert</span>
+              {activeToolPanel === 'convert' && (
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 text-black shrink-0 animate-bounce" />
+              )}
+            </button>
+
+            <button
+              id="btnSelectCivRegion"
+              type="button"
+              role="tab"
+              title="Select a Civ Region"
+              aria-selected={activeToolPanel === 'region'}
+              onClick={() => setActiveToolPanel('region')}
+              className={`group flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1.5 py-2 sm:px-5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-[10.5px] xs:text-xs sm:text-sm uppercase tracking-tight sm:tracking-wider font-mono whitespace-nowrap transition-all duration-200 cursor-pointer select-none active:scale-95 ${
+                activeToolPanel === 'region'
+                  ? 'bg-[#E25530] text-black border-2 border-[#FF0500] shadow-[0_0_15px_rgba(226,85,48,0.45)]'
+                  : 'bg-zinc-950/80 hover:bg-zinc-900 border border-[#FF0500]/50 hover:border-[#FFB451] text-[#FFB451]'
+              }`}
+            >
+              <Compass className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform group-hover:scale-110 ${activeToolPanel === 'region' ? 'text-black' : 'text-[#FFB451]'}`} />
+              <span>Civ Region</span>
+              {activeToolPanel === 'region' && (
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 text-black shrink-0 animate-bounce" />
+              )}
+            </button>
+
+            <button
+              id="btnCheckRegionClaim"
+              type="button"
+              role="tab"
+              title="Check if a region is claimed by a civ"
+              aria-selected={activeToolPanel === 'claim'}
+              onClick={() => setActiveToolPanel('claim')}
+              className={`group flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-1.5 py-2 sm:px-5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-[10.5px] xs:text-xs sm:text-sm uppercase tracking-tight sm:tracking-wider font-mono whitespace-nowrap transition-all duration-200 cursor-pointer select-none active:scale-95 ${
+                activeToolPanel === 'claim'
+                  ? 'bg-[#E25530] text-black border-2 border-[#FF0500] shadow-[0_0_15px_rgba(226,85,48,0.45)]'
+                  : 'bg-zinc-950/80 hover:bg-zinc-900 border border-[#FF0500]/50 hover:border-[#FFB451] text-[#FFB451]'
+              }`}
+            >
+              <ShieldAlert className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform group-hover:scale-110 ${activeToolPanel === 'claim' ? 'text-black' : 'text-[#FF0500]'}`} />
+              <span>Check Claim</span>
+              {activeToolPanel === 'claim' && (
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 text-black shrink-0 animate-bounce" />
+              )}
+            </button>
+          </div>
         </div>
 
         {database ? (
           <div className="space-y-6 w-full">
             
-            {/* Top row - Input sections (Coordinate/Glyph Conversion & Select a Civ Region) */}
-            <div className="grid grid-cols-1 gap-6 items-start w-full">
-              
-              {/* Seed manual variables card inputs */}
-              <div className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl text-[#FFB451] flex flex-col justify-between" style={{ fontFamily: '"geonms-font", sans-serif' }}>
-                <div>
-                  <div 
-                    onClick={() => setConversionSectionFolded(!conversionSectionFolded)}
-                    className="flex items-center justify-between border-b border-[#FF0500] pb-3 text-[#FFB451] cursor-pointer select-none group/hdr"
+            {/* Tool Panels Container - only one panel displayed at a time, folding down from function buttons */}
+            <div className="w-full" id="activeToolPanelContainer">
+              <AnimatePresence mode="wait">
+                {activeToolPanel === 'convert' && (
+                  <motion.div
+                    key="tool-panel-convert"
+                    initial={{ height: 0, opacity: 0, y: -10 }}
+                    animate={{ height: "auto", opacity: 1, y: 0 }}
+                    exit={{ height: 0, opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden w-full"
                   >
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-5 h-5 text-[#FFB451] group-hover/hdr:scale-110 transition-transform" />
-                      <h2 className="text-sm font-bold uppercase tracking-widest text-[#FFB451]">
-                        {t.exactLocationTitle}
-                      </h2>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {(manualCoordinates || glyphInput || selectedPlanet !== 1) && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setManualCoordinates('');
-                            setGlyphInput('');
-                            setSelectedPlanet(1);
-                          }}
-                          className="text-xs bg-[#E25530]/10 hover:bg-[#E25530]/20 border border-[#FF0500]/40 hover:border-[#FFB451] px-2.5 py-1 rounded text-[#FFB451] transition-all flex items-center gap-1 cursor-pointer active:scale-95 text-[10px] font-mono tracking-wider font-semibold"
-                          title={t.clearFields}
-                        >
-                          <Trash2 className="w-3 h-3 text-[#FFB451]" />
-                          <span>{t.clearFields.toUpperCase()}</span>
-                        </button>
-                      )}
+                    {/* Convert Coordinates/Glyphs Card */}
+                    <div className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl text-[#FFB451] flex flex-col justify-between" style={{ fontFamily: '"geonms-font", sans-serif' }}>
                       <div>
-                        {conversionSectionFolded ? (
-                          <ChevronRight className="w-5 h-5 text-[#E25530] animate-pulse" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-[#FFB451]" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                        <div className="flex items-center justify-between border-b border-[#FF0500] pb-3 text-[#FFB451]">
+                          <div className="flex items-center gap-2">
+                            <Layers className="w-5 h-5 text-[#FFB451]" />
+                            <h2 className="text-sm font-bold uppercase tracking-widest text-[#FFB451]">
+                              {t.exactLocationTitle || "Convert Coordinates/Glyphs"}
+                            </h2>
+                          </div>
+                          {(manualCoordinates || glyphInput || selectedPlanet !== 1) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setManualCoordinates('');
+                                setGlyphInput('');
+                                setSelectedPlanet(1);
+                              }}
+                              className="text-xs bg-[#E25530]/10 hover:bg-[#E25530]/20 border border-[#FF0500]/40 hover:border-[#FFB451] px-2.5 py-1 rounded text-[#FFB451] transition-all flex items-center gap-1 cursor-pointer active:scale-95 text-[10px] font-mono tracking-wider font-semibold"
+                              title={t.clearFields}
+                            >
+                              <Trash2 className="w-3 h-3 text-[#FFB451]" />
+                              <span>{t.clearFields.toUpperCase()}</span>
+                            </button>
+                          )}
+                        </div>
 
-                  <AnimatePresence initial={false}>
-                    {!conversionSectionFolded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
                         <div className="pt-6 space-y-4">
                           {/* Coordinates and Planet input fields on the same line */}
                           <div className="flex items-start gap-3">
@@ -3237,43 +3336,32 @@ export default function App() {
                             <span>{t.generateGlyphsBtn}</span>
                           </button>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
 
-              {/* Regional selection control panel */}
-              <div id="controls-panel" className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl relative overflow-visible text-[#FFB451] flex flex-col justify-between">
-                <div>
-                  <div 
-                    onClick={() => setRegionSectionFolded(!regionSectionFolded)}
-                    className="flex items-center justify-between gap-2 border-b border-[#FF0500] pb-3 text-[#FFB451] cursor-pointer select-none group/hdr"
+                {activeToolPanel === 'region' && (
+                  <motion.div
+                    key="tool-panel-region"
+                    initial={{ height: 0, opacity: 0, y: -10 }}
+                    animate={{ height: "auto", opacity: 1, y: 0 }}
+                    exit={{ height: 0, opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden w-full"
                   >
-                    <div className="flex items-center gap-2">
-                      <Compass className="w-5 h-5 text-[#FFB451] group-hover/hdr:scale-110 transition-transform" />
-                      <h2 className="text-md font-bold uppercase tracking-widest font-mono text-[#FFB451]">
-                        {t.regionSelection}
-                      </h2>
-                    </div>
-                    <div>
-                      {regionSectionFolded ? (
-                        <ChevronRight className="w-5 h-5 text-[#E25530] animate-pulse" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-[#FFB451]" />
-                      )}
-                    </div>
-                  </div>
+                    {/* Select a Civ Region Card */}
+                    <div id="controls-panel" className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl relative overflow-visible text-[#FFB451] flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-2 border-b border-[#FF0500] pb-3 text-[#FFB451]">
+                          <div className="flex items-center gap-2">
+                            <Compass className="w-5 h-5 text-[#FFB451]" />
+                            <h2 className="text-md font-bold uppercase tracking-widest font-mono text-[#FFB451]">
+                              {t.regionSelection || "Select a Civ Region"}
+                            </h2>
+                          </div>
+                        </div>
 
-                  <AnimatePresence initial={false}>
-                    {!regionSectionFolded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
                         <div className="pt-6 space-y-4 text-[#FFB451]">
                           
                           {/* Galaxy Autocomplete Select field */}
@@ -3434,46 +3522,35 @@ export default function App() {
                             <span>{t.generalRandomRegionGlyphsBtn}</span>
                           </button>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* Check Region Claim separate section */}
-              {(() => {
-                const ct = claimTranslations[lang] || claimTranslations.en;
-                return (
-                  <div id="check-claim-panel" className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl relative overflow-visible text-[#FFB451] flex flex-col justify-between animate-fade-in" style={{ fontFamily: '"geonms-font", sans-serif' }}>
-                    <div>
-                      <div 
-                        onClick={() => setClaimSectionFolded(!claimSectionFolded)}
-                        className="flex items-center justify-between gap-2 border-b border-[#FF0500] pb-3 text-[#FFB451] cursor-pointer select-none group/hdr"
-                      >
-                        <div className="flex items-center gap-2">
-                          <ShieldAlert className="w-5 h-5 text-[#FF0500] group-hover/hdr:scale-110 transition-transform" />
-                          <h2 className="text-md font-bold uppercase tracking-widest font-mono text-[#FFB451]">
-                            {ct.title}
-                          </h2>
-                        </div>
-                        <div>
-                          {claimSectionFolded ? (
-                            <ChevronRight className="w-5 h-5 text-[#E25530] animate-pulse" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5 text-[#FFB451]" />
-                          )}
-                        </div>
                       </div>
+                    </div>
+                  </motion.div>
+                )}
 
-                      <AnimatePresence initial={false}>
-                        {!claimSectionFolded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="overflow-hidden"
-                          >
+                {activeToolPanel === 'claim' && (
+                  <motion.div
+                    key="tool-panel-claim"
+                    initial={{ height: 0, opacity: 0, y: -10 }}
+                    animate={{ height: "auto", opacity: 1, y: 0 }}
+                    exit={{ height: 0, opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden w-full"
+                  >
+                    {/* Check Region Claim Card */}
+                    {(() => {
+                      const ct = claimTranslations[lang] || claimTranslations.en;
+                      return (
+                        <div id="check-claim-panel" className="bg-zinc-950/80 border border-[#FF0500] rounded-xl p-6 shadow-xl relative overflow-visible text-[#FFB451] flex flex-col justify-between animate-fade-in" style={{ fontFamily: '"geonms-font", sans-serif' }}>
+                          <div>
+                            <div className="flex items-center justify-between gap-2 border-b border-[#FF0500] pb-3 text-[#FFB451]">
+                              <div className="flex items-center gap-2">
+                                <ShieldAlert className="w-5 h-5 text-[#FF0500]" />
+                                <h2 className="text-md font-bold uppercase tracking-widest font-mono text-[#FFB451]">
+                                  {ct.title || "Check Region Claim"}
+                                </h2>
+                              </div>
+                            </div>
+
                             <div className="pt-6 space-y-4" id="check-region-claim-section">
                               {/* Search Mode Toggle Tabs */}
                               <div className="flex rounded-lg bg-zinc-900 p-1 border border-[#FF0500]/30 font-mono text-xs">
@@ -3508,8 +3585,21 @@ export default function App() {
                                     {ct.regionName}
                                   </label>
                                   <div className="flex gap-2">
-                                    <div className="relative flex-1" id="claimRegionAutocompleteContainer">
+                                    <div className="relative flex-1 bg-zinc-900 rounded-lg" id="claimRegionAutocompleteContainer">
+                                      {/* Predictive Ghost Text Overlay for Auto Fill */}
+                                      {predictedSuffix && (
+                                        <div
+                                          ref={ghostOverlayRef}
+                                          aria-hidden="true"
+                                          className="absolute inset-0 pointer-events-none rounded-lg p-3 pr-24 text-sm font-semibold flex items-center whitespace-pre overflow-hidden border border-transparent select-none z-0"
+                                        >
+                                          <span className="opacity-0">{claimRegionInput}</span>
+                                          <span className="text-[#FFB451]/40">{predictedSuffix}</span>
+                                        </div>
+                                      )}
+
                                       <input
+                                        ref={claimInputRef}
                                         id="claimRegionInput"
                                         type="text"
                                         placeholder={ct.placeholder}
@@ -3517,11 +3607,58 @@ export default function App() {
                                         onChange={(e) => {
                                           setClaimRegionInput(e.target.value);
                                           setShowClaimSuggestions(true);
+                                          if (ghostOverlayRef.current) {
+                                            ghostOverlayRef.current.scrollLeft = e.target.scrollLeft;
+                                          }
+                                        }}
+                                        onScroll={(e) => {
+                                          if (ghostOverlayRef.current) {
+                                            ghostOverlayRef.current.scrollLeft = (e.target as HTMLInputElement).scrollLeft;
+                                          }
                                         }}
                                         onFocus={() => setShowClaimSuggestions(true)}
                                         onBlur={() => setTimeout(() => setShowClaimSuggestions(false), 250)}
-                                        className="w-full bg-zinc-900 border border-[#FF0500] rounded-lg p-3 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all placeholder-[#FFB451]/30 font-semibold"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Tab' && predictedRegion) {
+                                            e.preventDefault();
+                                            setClaimRegionInput(predictedRegion);
+                                            setShowClaimSuggestions(false);
+                                          } else if (
+                                            e.key === 'ArrowRight' &&
+                                            predictedRegion &&
+                                            e.currentTarget.selectionStart === claimRegionInput.length
+                                          ) {
+                                            e.preventDefault();
+                                            setClaimRegionInput(predictedRegion);
+                                            setShowClaimSuggestions(false);
+                                          } else if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            setShowClaimSuggestions(false);
+                                            handleCheckClaim();
+                                          }
+                                        }}
+                                        className="relative z-10 w-full bg-transparent border border-[#FF0500] rounded-lg p-3 pr-24 text-sm text-[#FFB451] focus:border-[#FF0500] focus:ring-1 focus:ring-[#FF0500]/30 focus:outline-none transition-all placeholder-[#FFB451]/30 font-semibold"
                                       />
+
+                                      {/* Clickable/Tappable Autofill Prompt Badge */}
+                                      {predictedRegion && (
+                                        <button
+                                          type="button"
+                                          tabIndex={-1}
+                                          onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            setClaimRegionInput(predictedRegion);
+                                            setShowClaimSuggestions(false);
+                                            claimInputRef.current?.focus();
+                                          }}
+                                          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 px-2 py-1 bg-[#E25530]/20 hover:bg-[#E25530]/40 border border-[#FF0500]/50 rounded text-xs text-[#FFB451] font-mono flex items-center gap-1 cursor-pointer transition-all shadow-sm active:scale-95"
+                                          title={`Autofill: ${predictedRegion} (or press Tab)`}
+                                        >
+                                          <span className="hidden sm:inline text-[11px] font-semibold">Autofill</span>
+                                          <span className="text-[11px] font-mono text-[#FFB451]/90">Tab ⇥</span>
+                                        </button>
+                                      )}
+
                                       {showClaimSuggestions && filteredClaimRegions.length > 0 && (
                                         <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-zinc-950 border border-[#FF0500] rounded-lg shadow-2xl">
                                           {filteredClaimRegions.map(name => (
@@ -3709,14 +3846,13 @@ export default function App() {
                                 </div>
                               )}
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                );
-              })()}
-
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Results sections inside a single full-width vertical stack */}
@@ -4158,10 +4294,7 @@ export default function App() {
                 </div>
 
                 {/* Database Source Toggle */}
-                <div className="space-y-1.5 pt-1">
-                  <label className="text-[10px] font-mono font-bold uppercase tracking-wider block text-[#FFB451]/80">
-                    {t.dbSelectionLabel}
-                  </label>
+                <div className="pt-1">
                   <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded-lg border border-[#FF0500]/40">
                     <button
                       type="button"
@@ -4303,21 +4436,46 @@ export default function App() {
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-2xl bg-zinc-950 border border-[#FF0500] rounded-xl p-6 shadow-2xl relative flex flex-col max-h-[85vh] text-[#FFB451] space-y-4"
             >
-              {/* Header section with icon, title, and close button */}
+              {/* Header section with icon, title, and action buttons */}
               <div className="flex items-center justify-between border-b border-[#FF0500] pb-3 text-[#FFB451] shrink-0">
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-[#FF0500]" />
                   <span className="text-sm font-extrabold uppercase font-mono tracking-widest text-[#FFB451]">
-                    {t.appChangeLogTitle}
+                    {t.appChangeLogTitle || "Change Log"}
                   </span>
                 </div>
-                <button
-                  onClick={() => setShowChangeLogModal(false)}
-                  className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
-                  title={t.close}
-                >
-                  <X className="w-4 h-4 text-black font-bold" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* PDF Change Log button preceding Refresh button, icon-only with tooltip */}
+                  <button
+                    onClick={generatePDFChangeLog}
+                    disabled={changeLogLoading || changeLogGroups.length === 0}
+                    className="p-1.5 border border-[#FF0500]/60 bg-zinc-900 text-[#FFB451] hover:bg-[#E25530]/20 hover:border-[#FFB451] hover:text-white rounded transition-all cursor-pointer flex items-center justify-center disabled:opacity-40 active:scale-95"
+                    title="PDF Change Log"
+                    aria-label="PDF Change Log"
+                  >
+                    <FileDown className="w-4 h-4 text-[#FFB451]" />
+                  </button>
+
+                  {/* Refresh button preceding 'X' close button, icon-only with tooltip */}
+                  <button
+                    onClick={fetchChangeLog}
+                    disabled={changeLogLoading}
+                    className="p-1.5 border border-[#FF0500]/60 bg-zinc-900 text-[#FFB451] hover:bg-[#E25530]/20 hover:border-[#FFB451] hover:text-white rounded transition-all cursor-pointer flex items-center justify-center disabled:opacity-50 active:scale-95"
+                    title="Refresh Change Log"
+                    aria-label="Refresh Change Log"
+                  >
+                    <RefreshCw className={`w-4 h-4 text-[#FFB451] ${changeLogLoading ? 'animate-spin' : ''}`} />
+                  </button>
+
+                  {/* 'X' style close button */}
+                  <button
+                    onClick={() => setShowChangeLogModal(false)}
+                    className="p-1.5 border border-[#FF0500] bg-[#E25530] text-black rounded hover:bg-[#E25530]/80 transition-colors cursor-pointer flex items-center justify-center"
+                    title={t.close}
+                  >
+                    <X className="w-4 h-4 text-black font-bold" />
+                  </button>
+                </div>
               </div>
 
               {/* Scrollable Change Log List */}
@@ -4369,35 +4527,6 @@ export default function App() {
                     </div>
                   ))
                 )}
-              </div>
-
-              {/* Footer */}
-              <div className="border-t border-[#FF0500]/50 pt-3 flex items-center justify-between shrink-0">
-                <button
-                  onClick={fetchChangeLog}
-                  disabled={changeLogLoading}
-                  className="flex items-center gap-1.5 text-[10px] font-bold font-mono text-[#FFB451] hover:text-white uppercase tracking-wider cursor-pointer disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3 h-3 text-[#E25530] ${changeLogLoading ? 'animate-spin' : ''}`} />
-                  <span>{t.refreshLog}</span>
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={generatePDFChangeLog}
-                    disabled={changeLogLoading || changeLogGroups.length === 0}
-                    className="bg-zinc-900 text-[#FFB451] hover:bg-zinc-800 border border-[#E25530] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:text-white transition-all duration-150 cursor-pointer disabled:opacity-40"
-                  >
-                    PDF Change Log
-                  </button>
-
-                  <button
-                    onClick={() => setShowChangeLogModal(false)}
-                    className="bg-[#E25530] text-black border border-[#FF0500] font-extrabold uppercase text-[10px] tracking-wider px-4 py-1.5 rounded hover:bg-[#E25530]/90 transition-all duration-150 cursor-pointer"
-                  >
-                    {t.close}
-                  </button>
-                </div>
               </div>
             </motion.div>
           </div>
