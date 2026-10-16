@@ -40,7 +40,8 @@ import {
   FileDown,
   History,
   Keyboard,
-  CornerDownLeft
+  CornerDownLeft,
+  Clock
 } from 'lucide-react';
 import { 
   DatabaseState, 
@@ -889,6 +890,32 @@ export default function App() {
     });
   };
 
+  // AGT DB Auto-Refresh settings state
+  const [agtAutoRefreshEnabled, setAgtAutoRefreshEnabled] = useState<boolean>(() => {
+    const cached = localStorage.getItem('agt_db_auto_refresh_enabled');
+    return cached === 'true';
+  });
+
+  const toggleAgtAutoRefresh = () => {
+    setAgtAutoRefreshEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem('agt_db_auto_refresh_enabled', String(next));
+      return next;
+    });
+  };
+
+  const [agtAutoRefreshDays, setAgtAutoRefreshDays] = useState<number>(() => {
+    const cached = localStorage.getItem('agt_db_auto_refresh_days');
+    const val = cached ? parseInt(cached, 10) : 30;
+    return isNaN(val) ? 30 : Math.max(1, Math.min(180, val));
+  });
+
+  const handleAgtAutoRefreshDaysChange = (val: number) => {
+    const clamped = Math.max(1, Math.min(180, val));
+    setAgtAutoRefreshDays(clamped);
+    localStorage.setItem('agt_db_auto_refresh_days', String(clamped));
+  };
+
   const [hoveredQuickGlyph, setHoveredQuickGlyph] = useState<string | null>(null);
   const [showFavoritesModal, setShowFavoritesModal] = useState<boolean>(false);
   const [showCoordsInfoModal, setShowCoordsInfoModal] = useState<boolean>(false);
@@ -1607,6 +1634,18 @@ export default function App() {
   const [historySortBy, setHistorySortBy] = useState<'default' | 'galaxy' | 'civilization' | 'date'>('default');
   const [historySortOrder, setHistorySortOrder] = useState<'asc' | 'desc'>('desc');
 
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+  };
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
   const addToHistory = (
     seq: string,
     coords?: string,
@@ -1672,6 +1711,7 @@ export default function App() {
     const seq = currentSequence;
     if (favorites.some(fav => fav.sequence === seq)) {
       setFavorites(prev => prev.filter(fav => fav.sequence !== seq));
+      showToast("Removed from favorites");
     } else {
       const activeCoords = manualCoordinates.trim().toUpperCase();
       const activeGalaxy = selectedGalaxy || undefined;
@@ -1688,16 +1728,39 @@ export default function App() {
         createdAt: new Date().toISOString()
       };
       setFavorites(prev => [...prev, favItem]);
+      showToast("Added to favorites");
+    }
+  };
+
+  const toggleFavoriteItem = (item: HistoryItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (favorites.some(fav => fav.sequence === item.sequence)) {
+      setFavorites(prev => prev.filter(fav => fav.sequence !== item.sequence));
+      showToast("Removed from favorites");
+    } else {
+      const favItem: FavoriteSequence = {
+        id: Date.now().toString() + Math.random(),
+        sequence: item.sequence,
+        galaxy: item.galaxy,
+        civilization: item.civilization,
+        region: item.region,
+        coordinates: item.coordinates,
+        createdAt: new Date().toISOString()
+      };
+      setFavorites(prev => [...prev, favItem]);
+      showToast("Added to favorites");
     }
   };
 
   const deleteFavorite = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setFavorites(prev => prev.filter(fav => fav.id !== id));
+    showToast("Deleted favorite");
   };
 
   const clearAllFavorites = () => {
     setFavorites([]);
+    showToast("Cleared all favorites");
   };
 
   const updateFavoriteName = (id: string, name: string) => {
@@ -1763,6 +1826,13 @@ export default function App() {
 
   const clearAllHistory = () => {
     setHistory([]);
+    showToast("Cleared all past searches");
+  };
+
+  const deleteHistoryItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHistory(prev => prev.filter(item => item.id !== id));
+    showToast("Deleted past search");
   };
 
   const exportHistoryCSV = () => {
@@ -1956,6 +2026,7 @@ export default function App() {
     navigator.clipboard.writeText(seq);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1500);
+    showToast("Copied sequence to clipboard");
   };
 
   const loadFavorite = (fav: FavoriteSequence) => {
@@ -2246,7 +2317,17 @@ export default function App() {
         setDbProvider(currentProvider);
 
         if (currentProvider === 'agt') {
-          if (agtDbObj) {
+          const autoRefreshEnabled = localStorage.getItem('agt_db_auto_refresh_enabled') === 'true';
+          const maxDays = parseInt(localStorage.getItem('agt_db_auto_refresh_days') || '30', 10);
+          let shouldRefresh = false;
+          if (agtDbObj && autoRefreshEnabled && agtCacheTimeRaw) {
+            const ageDays = (Date.now() - new Date(agtCacheTimeRaw).getTime()) / (1000 * 60 * 60 * 24);
+            if (ageDays > maxDays) {
+              shouldRefresh = true;
+            }
+          }
+
+          if (agtDbObj && !shouldRefresh) {
             setDatabase(agtDbObj);
           } else {
             await fetchAgtDatabase();
@@ -2576,6 +2657,7 @@ export default function App() {
       () => {
         setClipboardFeedback(true);
         setTimeout(() => setClipboardFeedback(false), 2000);
+        showToast("Copied sequence to clipboard");
       },
       () => {
         alert(t.copiedFail);
@@ -3917,13 +3999,25 @@ export default function App() {
 
                   {/* Text code and copy key display */}
                   <div className="w-full bg-zinc-950/80 rounded-md border border-zinc-900 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="font-mono text-xs">
-                      <span className="text-zinc-500 uppercase tracking-widest block text-[9px]">
-                        {t.portalCode}
-                      </span>
-                      <span className="text-sm tracking-widest text-zinc-200 font-bold font-mono">
-                        {rollSymbols.join('').toUpperCase()}
-                      </span>
+                    <div className="font-mono text-xs space-y-2">
+                      <div>
+                        <span className="text-zinc-500 uppercase tracking-widest block text-[9px]">
+                          {t.portalCode}
+                        </span>
+                        <span className="text-sm tracking-widest text-zinc-200 font-bold font-mono">
+                          {rollSymbols.join('').toUpperCase()}
+                        </span>
+                      </div>
+                      {glyphs2Coords(rollSymbols.join('')) && (
+                        <div>
+                          <span className="text-zinc-500 uppercase tracking-widest block text-[9px]">
+                            GALACTIC COORDINATES
+                          </span>
+                          <span className="text-xs tracking-wider text-[#FFB451] font-bold font-mono">
+                            {glyphs2Coords(rollSymbols.join(''))}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -4417,6 +4511,59 @@ export default function App() {
                 {!syncStatus.active && syncResult === 'error' && (
                   <div className="mt-3 text-center bg-zinc-900 border border-red-500/50 p-3 rounded text-xs font-mono text-[#FFB451]">
                     ⚠ {t.fetchError}: {syncErrorMsg}
+                  </div>
+                )}
+              </div>
+
+              {/* AGT DB Auto-Refresh block */}
+              <div className="border-t border-[#FF0500]/50 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[#FFB451]">
+                    <Clock className="w-4 h-4 text-[#FFB451]" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-[#FFB451]">
+                      AGT DB Auto-Refresh
+                    </h4>
+                  </div>
+                  <button
+                    id="agtAutoRefreshToggleBtn"
+                    type="button"
+                    onClick={toggleAgtAutoRefresh}
+                    className={`font-bold uppercase text-xs font-mono py-2 px-4 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer border ${
+                      agtAutoRefreshEnabled
+                        ? 'bg-[#E25530] text-black border-[#FF0500] shadow-md'
+                        : 'bg-zinc-900 text-[#FFB451]/60 border-[#FF0500]/40 hover:text-[#FFB451]'
+                    }`}
+                  >
+                    <span>{agtAutoRefreshEnabled ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
+
+                {agtAutoRefreshEnabled && (
+                  <div className="pt-2 flex items-center justify-between gap-3 bg-zinc-900/40 p-3 rounded-lg border border-[#FF0500]/30 font-mono">
+                    <span className="text-xs text-[#FFB451]">
+                      Max Cache Age (Days, 1-180):
+                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="180"
+                      value={agtAutoRefreshDays}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) {
+                          handleAgtAutoRefreshDaysChange(val);
+                        } else {
+                          setAgtAutoRefreshDays(e.target.value as any);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (isNaN(val) || val < 1) handleAgtAutoRefreshDaysChange(1);
+                        else if (val > 180) handleAgtAutoRefreshDaysChange(180);
+                        else handleAgtAutoRefreshDaysChange(val);
+                      }}
+                      className="w-20 bg-zinc-950 border border-[#FF0500]/60 rounded p-1.5 text-center text-xs font-bold text-[#FFB451] focus:outline-none focus:border-[#FF0500]"
+                    />
                   </div>
                 )}
               </div>
@@ -5271,43 +5418,63 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Action Buttons (Copy, Load) */}
+                        {/* Action Buttons (Copy, Favorite, Load) */}
                         <div className="flex sm:flex-col items-center gap-2 self-end sm:self-center shrink-0" onClick={(e) => e.stopPropagation()}>
-                          <motion.button
-                            onClick={(e) => handleCopy(item.id, item.sequence, e)}
-                            animate={copiedId === item.id ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-                            transition={{ duration: 0.2 }}
-                            className={`p-1.5 rounded cursor-pointer transition-all duration-300 relative border ${
-                              copiedId === item.id
-                                ? 'bg-emerald-950/80 border-emerald-500/80 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
-                                : 'bg-zinc-950/80 border-zinc-900 text-zinc-400 hover:text-green-400 hover:border-green-500/30'
-                            }`}
-                            title={copiedId === item.id ? "Copied" : "Copy"}
-                          >
-                            <AnimatePresence mode="wait" initial={false}>
-                              {copiedId === item.id ? (
-                                <motion.div
-                                  key="check"
-                                  initial={{ scale: 0.6, rotate: -15, opacity: 0 }}
-                                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                                  exit={{ scale: 0.6, opacity: 0 }}
-                                  transition={{ duration: 0.15 }}
-                                >
-                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                </motion.div>
-                              ) : (
-                                <motion.div
-                                  key="copy"
-                                  initial={{ scale: 0.8, opacity: 0 }}
-                                  animate={{ scale: 1, opacity: 1 }}
-                                  exit={{ scale: 0.8, opacity: 0 }}
-                                  transition={{ duration: 0.15 }}
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </motion.button>
+                          <div className="flex sm:flex-col items-center gap-1.5">
+                            <motion.button
+                              onClick={(e) => handleCopy(item.id, item.sequence, e)}
+                              animate={copiedId === item.id ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                              transition={{ duration: 0.2 }}
+                              className={`p-1.5 rounded cursor-pointer transition-all duration-300 relative border ${
+                                copiedId === item.id
+                                  ? 'bg-emerald-950/80 border-emerald-500/80 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                                  : 'bg-zinc-950/80 border-zinc-900 text-zinc-400 hover:text-green-400 hover:border-green-500/30'
+                              }`}
+                              title={copiedId === item.id ? "Copied" : "Copy"}
+                            >
+                              <AnimatePresence mode="wait" initial={false}>
+                                {copiedId === item.id ? (
+                                  <motion.div
+                                    key="check"
+                                    initial={{ scale: 0.6, rotate: -15, opacity: 0 }}
+                                    animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                                    exit={{ scale: 0.6, opacity: 0 }}
+                                    transition={{ duration: 0.15 }}
+                                  >
+                                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    key="copy"
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.8, opacity: 0 }}
+                                    transition={{ duration: 0.15 }}
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </motion.button>
+                            <button
+                              onClick={(e) => toggleFavoriteItem(item, e)}
+                              className={`p-1.5 rounded cursor-pointer transition-all duration-300 border ${
+                                favorites.some(fav => fav.sequence === item.sequence)
+                                  ? 'bg-[#E25530]/20 border-[#E25530] text-[#E25530] shadow-[0_0_8px_rgba(226,85,48,0.3)]'
+                                  : 'bg-zinc-950/80 border-zinc-900 text-zinc-400 hover:text-yellow-400 hover:border-yellow-500/30'
+                              }`}
+                              title={favorites.some(fav => fav.sequence === item.sequence) ? "Remove from Favorites" : "Add to Favorites"}
+                            >
+                              <Star className={`w-3.5 h-3.5 ${favorites.some(fav => fav.sequence === item.sequence) ? 'fill-[#E25530]' : ''}`} />
+                            </button>
+                            <button
+                              onClick={(e) => deleteHistoryItem(item.id, e)}
+                              className="p-1.5 rounded bg-zinc-950/80 text-zinc-500 hover:text-red-500 border border-zinc-900 hover:border-red-500/40 cursor-pointer transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -5338,6 +5505,20 @@ export default function App() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none bg-zinc-950/95 border border-[#FFB451]/50 text-[#FFB451] px-4 py-2.5 rounded-xl shadow-[0_0_20px_rgba(255,180,81,0.25)] flex items-center gap-2 font-mono text-xs backdrop-blur-md"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#FFB451] animate-pulse" />
+            <span>{toastMessage}</span>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
