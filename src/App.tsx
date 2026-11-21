@@ -2103,15 +2103,23 @@ export default function App() {
     }
   }, []);
 
-  // Fetch AGT Region Database from Google Sheet CSV
+  // Fetch AGT Region Database CSV via server-side REGIONDB proxy
   const fetchAgtDatabase = async () => {
     setAgtSyncing(true);
     setAgtSyncStatusText('Downloading AGT Region Database...');
     try {
-      const AGT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0jFq80ut0o5jtApdhRG8sR2CIufVn0FNcugR_7fdCIfrDRfgB9s-SvEhBAePrQCibr1RcxFVoXj7o/pub?gid=354119689&single=true&output=csv';
-      const res = await fetch(AGT_CSV_URL);
+      const res = await fetch('/api/regiondb');
       if (!res.ok) {
-        throw new Error(`Failed to fetch AGT Sheet CSV (${res.status})`);
+        let errorMessage = `Failed to fetch REGIONDB (${res.status})`;
+        try {
+          const errJson = await res.json();
+          if (errJson && typeof errJson.error === 'string') {
+            errorMessage = errJson.error;
+          }
+        } catch {
+          // ignore JSON parse error
+        }
+        throw new Error(errorMessage);
       }
       const csvText = await res.text();
       setAgtSyncStatusText('Parsing AGT Region Data...');
